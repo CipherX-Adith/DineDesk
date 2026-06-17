@@ -1,0 +1,78 @@
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:#f5f5f5;
+}
+
+.container{
+  padding:20px;
+}
+
+h1{
+  text-align:center;
+}
+
+button{
+  padding:10px 15px;
+  margin:5px;
+  cursor:pointer;
+  border:none;
+  border-radius:6px;
+  background:#1976d2;
+  color:white;
+}
+
+button:hover{
+  background:#1565c0;
+}
+
+input{
+  padding:10px;
+  margin:5px;
+  border:1px solid #ccc;
+  border-radius:6px;
+}
+
+.menu-layout{
+  display:flex;
+  gap:20px;
+}
+
+.menu-section{
+  flex:2;
+}
+
+.cart-section{
+  flex:1;
+}
+
+.menu-card{
+  background:white;
+  padding:15px;
+  margin-bottom:15px;
+  border-radius:10px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.15);
+}
+
+.cart-card{
+  background:white;
+  padding:15px;
+  border-radius:10px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.15);
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  background:white;
+}
+
+th, td{
+  padding:10px;
+  border:1px solid #ddd;
+}
+
+th{
+  background:#1976d2;
+  color:white;
+}
