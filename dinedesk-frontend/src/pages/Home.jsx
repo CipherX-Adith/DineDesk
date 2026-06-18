@@ -339,7 +339,7 @@ export default function Home() {
             <div className="glass-panel" style={{ padding: 0, overflow: "hidden", textAlign: "left", borderRadius: "8px" }}>
               <div style={{ height: "240px", overflow: "hidden" }}>
                 <img 
-                  src="https://images.unsplash.com/photo-1598515214211-89d3e73ae83b?auto=format&fit=crop&q=80&w=600" 
+                  src="/grilled-chicken.png" 
                   alt="Grilled Herb Chicken" 
                   style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.5s ease" }}
                   onMouseOver={e => e.currentTarget.style.transform = "scale(1.06)"}
@@ -357,7 +357,7 @@ export default function Home() {
             <div className="glass-panel" style={{ padding: 0, overflow: "hidden", textAlign: "left", borderRadius: "8px" }}>
               <div style={{ height: "240px", overflow: "hidden" }}>
                 <img 
-                  src="https://images.unsplash.com/photo-1534080391025-097b03b2af8e?auto=format&fit=crop&q=80&w=600" 
+                  src="/seafood-platter.png" 
                   alt="Seafood Platter" 
                   style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.5s ease" }}
                   onMouseOver={e => e.currentTarget.style.transform = "scale(1.06)"}
