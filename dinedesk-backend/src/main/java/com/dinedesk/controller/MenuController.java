@@ -42,6 +42,13 @@ public class MenuController {
                         quantity
                 );
     }
+    @PutMapping("/{id}")
+    public Menu updateMenuItem(
+            @PathVariable Integer id,
+            @RequestBody MenuRequest request){
+
+        return menuService.updateMenuItem(id, request);
+    }
     @DeleteMapping("/{id}")
     public String deleteMenuItem(
             @PathVariable Integer id){

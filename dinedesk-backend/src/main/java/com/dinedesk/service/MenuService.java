@@ -102,6 +102,35 @@ public class MenuService {
 
         return menu;
     }
+    public Menu updateMenuItem(
+            Integer itemId,
+            MenuRequest request){
+
+        Menu menu =
+                menuRepository.findById(itemId)
+                        .orElse(null);
+
+        if(menu != null){
+            if(request.getItemName() != null) menu.setItemName(request.getItemName());
+            if(request.getCategory() != null) menu.setCategory(request.getCategory());
+            if(request.getDescription() != null) menu.setDescription(request.getDescription());
+            if(request.getPrice() != null) menu.setPrice(request.getPrice());
+            if(request.getAvailableQuantity() != null) {
+                menu.setAvailableQuantity(request.getAvailableQuantity());
+                // Update availability based on quantity
+                if (request.getAvailableQuantity() > 0) {
+                    menu.setAvailability("Available");
+                } else {
+                    menu.setAvailability("OutOfStock");
+                }
+            }
+            if(request.getAvailability() != null) menu.setAvailability(request.getAvailability());
+
+            menuRepository.save(menu);
+        }
+
+        return menu;
+    }
     public String deleteMenuItem(
             Integer itemId){
 

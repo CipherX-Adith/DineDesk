@@ -26,4 +26,8 @@ public class OrderItem {
 
     private Double itemTotal;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "itemId", referencedColumnName = "itemId", insertable = false, updatable = false)
+    private Menu menuItem;
+
 }

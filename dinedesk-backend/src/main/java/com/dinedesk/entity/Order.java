@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "orders")
@@ -30,5 +31,9 @@ public class Order {
     private String paymentStatus;
 
     private LocalDateTime orderTime;
+
+    @OneToMany(fetch = FetchType.EAGER)
+    @JoinColumn(name = "orderId", referencedColumnName = "orderId", insertable = false, updatable = false)
+    private List<OrderItem> items;
 
 }
