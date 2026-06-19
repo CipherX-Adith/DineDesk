@@ -33,8 +33,9 @@ public class CustomerService {
                 request.getCustomerName()
         );
 
+        int accompanying = request.getAccompanyingPeople() != null ? request.getAccompanyingPeople() : 0;
         customer.setPartySize(
-                request.getAccompanyingPeople() + 1
+                accompanying + 1
         );
 
         customer.setCreatedAt(

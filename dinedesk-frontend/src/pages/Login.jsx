@@ -87,14 +87,14 @@ export default function Login({ setLoggedInUser }) {
       
       if (menuRes.data.length === 0) {
         const sampleDishes = [
-          { itemName: "Veg Burger", category: "Starters", description: "Juicy vegetable patty with lettuce, cheese, and special sauce.", price: 120.0, availableQuantity: 50, availability: "Available" },
-          { itemName: "French Fries", category: "Starters", description: "Golden, crispy, lightly salted potato fries served with dip.", price: 80.0, availableQuantity: 100, availability: "Available" },
-          { itemName: "Paneer Tikka", category: "Mains", description: "Marinated cottage cheese cubes grilled with bell peppers and onions.", price: 240.0, availableQuantity: 30, availability: "Available" },
-          { itemName: "Butter Chicken", category: "Mains", description: "Tender chicken cooked in a rich, creamy, tomato-based gravy.", price: 320.0, availableQuantity: 35, availability: "Available" },
-          { itemName: "Chocolate Brownie", category: "Desserts", description: "Warm chocolate brownie drizzled with hot fudge syrup.", price: 150.0, availableQuantity: 40, availability: "Available" },
-          { itemName: "Vanilla Ice Cream", category: "Desserts", description: "Creamy vanilla bean ice cream scoop.", price: 90.0, availableQuantity: 40, availability: "Available" },
-          { itemName: "Coca Cola", category: "Drinks", description: "Chilled classic cola soft drink.", price: 50.0, availableQuantity: 200, availability: "Available" },
-          { itemName: "Orange Juice", category: "Drinks", description: "Freshly squeezed sweet oranges.", price: 70.0, availableQuantity: 60, availability: "Available" }
+          { itemName: "Royal Feast Combo", category: "Mains", description: "Premium Butter Chicken served with Garlic Naan, Basmati Rice, and Gulab Jamun.", price: 499.0, availableQuantity: 30, availability: "Available" },
+          { itemName: "Veggie Delight Combo", category: "Mains", description: "Paneer Tikka Masala served with Butter Roti, Veg Pulao, and fresh green salad.", price: 420.0, availableQuantity: 35, availability: "Available" },
+          { itemName: "Happy Hour Snack Combo", category: "Starters", description: "Crispy Vegetable Spring Rolls, French Fries, and Double Chilli Garlic Dip.", price: 180.0, availableQuantity: 50, availability: "Available" },
+          { itemName: "Burger & Fries Combo", category: "Starters", description: "Juicy Veg Burger served with golden crispy fries and a chilled soft beverage.", price: 220.0, availableQuantity: 60, availability: "Available" },
+          { itemName: "Grand Dessert Combo", category: "Desserts", description: "A decadent combination of hot Chocolate Brownie, Warm Waffle, and a scoop of Vanilla Ice Cream.", price: 280.0, availableQuantity: 25, availability: "Available" },
+          { itemName: "Double Treat Sweet Platter", category: "Desserts", description: "A platter of Premium Mango and Vanilla ice cream scoops topped with mixed fruits.", price: 160.0, availableQuantity: 30, availability: "Available" },
+          { itemName: "Tropical Cooler Combo", category: "Drinks", description: "A refreshing duo of Fresh Squeezed Orange Juice and Mint Mojito mocktail.", price: 130.0, availableQuantity: 80, availability: "Available" },
+          { itemName: "Table Drink Combo", category: "Drinks", description: "A set of four chilled classic cola soft drinks for the table.", price: 180.0, availableQuantity: 100, availability: "Available" }
         ];
 
         for (const dish of sampleDishes) {

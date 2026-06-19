@@ -335,6 +335,19 @@ export default function StaffDashboard({ loggedInUser }) {
     return c ? c.partySize : "N/A";
   };
 
+  const getCleanCustomerName = (fullName) => {
+    if (!fullName) return "N/A";
+    if (fullName.startsWith("Walk-in (") && fullName.endsWith(")")) {
+      return fullName.substring(9, fullName.length - 1);
+    }
+    return fullName;
+  };
+
+  const getCustomerType = (fullName) => {
+    if (!fullName) return "Dine-in (Web)";
+    return fullName.startsWith("Walk-in (") ? "Walk-in" : "Dine-in (Web)";
+  };
+
   const subtotal = posCart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const gst = subtotal * 0.18;
   const total = subtotal + gst;
@@ -348,11 +361,11 @@ export default function StaffDashboard({ loggedInUser }) {
       {/* Flashing Low Stock Alert Banner */}
       {lowStockCount > 0 && (
         <div 
-          className="glass-panel" 
+          className="royal-panel" 
           style={{ 
             padding: "16px 24px", 
             marginBottom: "20px", 
-            borderLeft: "5px solid var(--danger)", 
+            borderLeft: "5px solid var(--danger) !important", 
             background: "rgba(239, 68, 68, 0.08)",
             textAlign: "left",
             display: "flex",
@@ -369,15 +382,15 @@ export default function StaffDashboard({ loggedInUser }) {
           </div>
           <div style={{ display: "flex", gap: "10px" }}>
             <button 
-              className="btn btn-secondary" 
-              style={{ fontSize: "0.8rem", padding: "6px 12px", border: "1px solid var(--danger-border)", color: "var(--danger)" }}
+              className="royal-btn" 
+              style={{ fontSize: "0.8rem", padding: "8px 16px" }}
               onClick={() => setActiveTab("stock")}
             >
               Review Stock
             </button>
             <button 
-              className="btn btn-glass" 
-              style={{ fontSize: "0.8rem", padding: "6px 12px" }}
+              className="royal-btn-outline" 
+              style={{ fontSize: "0.8rem", padding: "8px 16px" }}
               onClick={() => {
                 const newIgnored = [...ignoredItemIds, ...lowStockItems.map(item => item.itemId)];
                 setIgnoredItemIds(newIgnored);
@@ -391,15 +404,15 @@ export default function StaffDashboard({ loggedInUser }) {
       )}
 
       {/* Title Header */}
-      <div className="glass-panel" style={{ padding: "20px 30px", marginBottom: "30px", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div className="royal-panel" style={{ padding: "20px 30px", marginBottom: "30px", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "20px" }}>
         <div>
-          <h1 style={{ fontSize: "2rem", fontFamily: "var(--display)" }}>Staff Dashboard</h1>
-          <p style={{ color: "var(--text-secondary)" }}>Signed in as: <strong style={{ color: "white" }}>{loggedInUser?.fullName || "Employee"}</strong></p>
+          <h1 className="royal-title" style={{ fontSize: "2rem", margin: 0 }}>Staff Console</h1>
+          <p style={{ color: "var(--text-secondary)", margin: "4px 0 0 0" }}>Signed in as: <strong style={{ color: "var(--accent)" }}>{loggedInUser?.fullName || "Employee"}</strong></p>
         </div>
-        <div className="tab-headers" style={{ marginBottom: 0 }}>
-          <button className={`tab-btn ${activeTab === "queue" ? "active" : ""}`} onClick={() => setActiveTab("queue")}>📋 Active Orders</button>
-          <button className={`tab-btn ${activeTab === "pos" ? "active" : ""}`} onClick={() => setActiveTab("pos")}>💻 Walk-in POS</button>
-          <button className={`tab-btn ${activeTab === "stock" ? "active" : ""}`} onClick={() => setActiveTab("stock")}>📝 Edit Menu</button>
+        <div className="royal-tabs-bar" style={{ marginBottom: 0, borderBottom: "none" }}>
+          <button className={`royal-tab-btn ${activeTab === "queue" ? "active" : ""}`} onClick={() => setActiveTab("queue")}>📋 Active Orders</button>
+          <button className={`royal-tab-btn ${activeTab === "pos" ? "active" : ""}`} onClick={() => setActiveTab("pos")}>💻 Walk-in POS</button>
+          <button className={`royal-tab-btn ${activeTab === "stock" ? "active" : ""}`} onClick={() => setActiveTab("stock")}>📝 Edit Menu</button>
         </div>
       </div>
 
@@ -407,10 +420,10 @@ export default function StaffDashboard({ loggedInUser }) {
       {activeTab === "queue" && (
         <div className="split-layout">
           {/* Order Queue List */}
-          <div className="glass-panel" style={{ padding: "24px", textAlign: "left" }}>
+          <div className="royal-panel" style={{ padding: "24px", textAlign: "left" }}>
             <div className="flex-between" style={{ marginBottom: "16px" }}>
-              <h2 style={{ fontFamily: "var(--display)", fontSize: "1.4rem" }}>Orders Queue</h2>
-              <button onClick={loadOrders} className="btn btn-secondary" style={{ padding: "6px 12px", fontSize: "0.85rem" }}>🔄 Refresh</button>
+              <h2 className="royal-title" style={{ fontSize: "1.25rem", margin: 0 }}>Orders Queue</h2>
+              <button onClick={loadOrders} className="royal-btn-outline" style={{ padding: "6px 12px", fontSize: "0.8rem" }}>🔄 Refresh</button>
             </div>
 
             {loadingOrders ? (
@@ -418,7 +431,7 @@ export default function StaffDashboard({ loggedInUser }) {
                 <div className="spinner"></div>
               </div>
             ) : orders.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "40px 0", color: "var(--text-muted)" }}>
+              <div style={{ textAlign: "center", padding: "40px 0", color: "var(--text-muted)", fontStyle: "italic" }}>
                 📭 No active orders in queue.
               </div>
             ) : (
@@ -430,22 +443,36 @@ export default function StaffDashboard({ loggedInUser }) {
                   return (
                     <div
                       key={order.orderId}
-                      className="glass-panel"
+                      className="royal-panel"
                       onClick={() => setSelectedOrder(order)}
                       style={{
                         padding: "16px",
                         cursor: "pointer",
-                        background: isSelected ? "rgba(255, 255, 255, 0.05)" : "rgba(255, 255, 255, 0.01)",
-                        borderColor: isSelected ? "var(--accent)" : "var(--border-glass)",
+                        background: isSelected ? "rgba(205, 162, 80, 0.08)" : "rgba(205, 162, 80, 0.02)",
+                        borderColor: isSelected ? "var(--accent)" : "rgba(205, 162, 80, 0.15)",
                         transition: "all 0.2s ease"
                       }}
                     >
                       <div className="flex-between" style={{ marginBottom: "8px" }}>
                         <div>
-                          <strong style={{ color: "#ffffff", marginRight: "8px" }}>{order.orderId}</strong>
-                          <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>{custName}</span>
+                          <strong style={{ color: "#ffffff", marginRight: "8px" }}>#{order.orderId}</strong>
+                          <div style={{ display: "inline-flex", gap: "6px", alignItems: "center", marginTop: "2px", verticalAlign: "middle" }}>
+                            <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>{getCleanCustomerName(custName)}</span>
+                            <span 
+                              style={{ 
+                                fontSize: "0.65rem", 
+                                padding: "1px 6px",
+                                background: getCustomerType(custName) === "Walk-in" ? "rgba(168, 85, 247, 0.1)" : "rgba(16, 185, 129, 0.1)",
+                                color: getCustomerType(custName) === "Walk-in" ? "#c084fc" : "#34d399",
+                                border: getCustomerType(custName) === "Walk-in" ? "1px solid rgba(168, 85, 247, 0.3)" : "1px solid rgba(16, 185, 129, 0.3)",
+                                borderRadius: "4px"
+                              }}
+                            >
+                              {getCustomerType(custName)}
+                            </span>
+                          </div>
                         </div>
-                        <span className={`status-badge ${order.orderStatus.toLowerCase()}`}>
+                        <span className={`status-badge ${order.orderStatus.toLowerCase()}`} style={{ border: "1px solid rgba(205,162,80,0.2)" }}>
                           {order.orderStatus}
                         </span>
                       </div>
@@ -462,28 +489,40 @@ export default function StaffDashboard({ loggedInUser }) {
           </div>
 
           {/* Right Side: Order Detail & Actions Panel */}
-          <div className="glass-panel" style={{ padding: "24px", textAlign: "left" }}>
+          <div className="royal-panel" style={{ padding: "24px", textAlign: "left" }}>
             {selectedOrder ? (
               <div>
-                <div className="flex-between" style={{ borderBottom: "1px solid var(--border-glass)", paddingBottom: "14px", marginBottom: "20px" }}>
+                <div className="flex-between" style={{ borderBottom: "1px solid rgba(205, 162, 80, 0.2)", paddingBottom: "14px", marginBottom: "20px" }}>
                   <div>
-                    <h2 style={{ fontFamily: "var(--display)", fontSize: "1.4rem" }}>Order Details</h2>
+                    <h2 className="royal-title" style={{ fontSize: "1.25rem", margin: 0 }}>Order Details</h2>
                     <span style={{ fontSize: "0.9rem", color: "var(--text-secondary)" }}>ID: <strong style={{ color: "white" }}>{selectedOrder.orderId}</strong></span>
                   </div>
-                  <button onClick={() => handleDeleteOrder(selectedOrder.orderId)} className="btn btn-danger" style={{ padding: "6px 12px", fontSize: "0.85rem" }}>
+                  <button onClick={() => handleDeleteOrder(selectedOrder.orderId)} className="royal-btn-outline" style={{ padding: "6px 12px", fontSize: "0.8rem", borderColor: "rgba(239, 68, 68, 0.4)", color: "#f87171" }}>
                     Cancel Order
                   </button>
                 </div>
 
                 {/* Details Fields */}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "20px" }}>
-                  <div style={{ background: "rgba(255, 255, 255, 0.02)", padding: "12px", borderRadius: "8px", border: "1px solid var(--border-glass)" }}>
+                  <div style={{ background: "rgba(205, 162, 80, 0.02)", padding: "12px", border: "1px solid rgba(205, 162, 80, 0.15)" }}>
                     <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>Guest Name</span>
-                    <div style={{ fontWeight: "600", color: "#ffffff", marginTop: "4px" }}>
-                      {getCustomerName(selectedOrder.customerId)}
+                    <div style={{ fontWeight: "600", color: "#ffffff", marginTop: "4px", display: "flex", gap: "8px", alignItems: "center" }}>
+                      {getCleanCustomerName(getCustomerName(selectedOrder.customerId))}
+                      <span 
+                        style={{ 
+                          fontSize: "0.65rem", 
+                          padding: "1px 6px",
+                          background: getCustomerType(getCustomerName(selectedOrder.customerId)) === "Walk-in" ? "rgba(168, 85, 247, 0.1)" : "rgba(16, 185, 129, 0.1)",
+                          color: getCustomerType(getCustomerName(selectedOrder.customerId)) === "Walk-in" ? "#c084fc" : "#34d399",
+                          border: getCustomerType(getCustomerName(selectedOrder.customerId)) === "Walk-in" ? "1px solid rgba(168, 85, 247, 0.3)" : "1px solid rgba(16, 185, 129, 0.3)",
+                          borderRadius: "4px"
+                        }}
+                      >
+                        {getCustomerType(getCustomerName(selectedOrder.customerId))}
+                      </span>
                     </div>
                   </div>
-                  <div style={{ background: "rgba(255, 255, 255, 0.02)", padding: "12px", borderRadius: "8px", border: "1px solid var(--border-glass)" }}>
+                  <div style={{ background: "rgba(205, 162, 80, 0.02)", padding: "12px", border: "1px solid rgba(205, 162, 80, 0.15)" }}>
                     <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>Table Party Size</span>
                     <div style={{ fontWeight: "600", color: "#ffffff", marginTop: "4px" }}>
                       {getCustomerPartySize(selectedOrder.customerId)} Guests
@@ -492,8 +531,8 @@ export default function StaffDashboard({ loggedInUser }) {
                 </div>
 
                 {/* Itemized Order list */}
-                <h3 style={{ fontSize: "1.1rem", marginBottom: "10px", fontFamily: "var(--display)" }}>Ordered Items</h3>
-                <div style={{ background: "rgba(0, 0, 0, 0.2)", borderRadius: "8px", padding: "10px 16px", marginBottom: "24px", maxHeight: "250px", overflowY: "auto" }}>
+                <h3 className="royal-subtitle" style={{ fontSize: "1.05rem", marginBottom: "10px", fontStyle: "normal" }}>Ordered Items</h3>
+                <div style={{ background: "rgba(0, 0, 0, 0.2)", border: "1px solid rgba(205, 162, 80, 0.12)", padding: "10px 16px", marginBottom: "24px", maxHeight: "250px", overflowY: "auto" }}>
                   {selectedOrder.items && selectedOrder.items.length > 0 ? (
                     selectedOrder.items.map((item, idx) => (
                       <div key={idx} className="flex-between" style={{ padding: "8px 0", borderBottom: idx < selectedOrder.items.length - 1 ? "1px solid rgba(255, 255, 255, 0.05)" : "none" }}>
@@ -512,67 +551,70 @@ export default function StaffDashboard({ loggedInUser }) {
                 </div>
 
                 {/* Financial Summary */}
-                <div style={{ borderTop: "1px solid var(--border-glass)", paddingTop: "14px", marginBottom: "30px", fontSize: "0.95rem" }}>
+                <div style={{ borderTop: "1px solid rgba(205, 162, 80, 0.2)", paddingTop: "14px", marginBottom: "20px", fontSize: "0.95rem" }}>
                   <div className="flex-between" style={{ marginBottom: "6px" }}>
                     <span>Subtotal:</span>
                     <span>₹{selectedOrder.subtotal?.toFixed(2)}</span>
                   </div>
-                  <div className="flex-between" style={{ marginBottom: "6px" }}>
+                  <div className="flex-between" style={{ color: "var(--text-muted)", marginBottom: "6px" }}>
                     <span>GST (18%):</span>
                     <span>₹{selectedOrder.gst?.toFixed(2)}</span>
                   </div>
-                  <div className="flex-between" style={{ fontSize: "1.2rem", fontWeight: "700", borderTop: "1px dotted var(--border-glass)", paddingTop: "10px", marginTop: "4px" }}>
+                  
+                  <div className="royal-divider-gold"><span>♦</span></div>
+                  
+                  <div className="flex-between" style={{ fontSize: "1.2rem", fontWeight: "700", paddingTop: "4px", marginTop: "4px" }}>
                     <span style={{ color: "#ffffff" }}>Grand Total:</span>
                     <span style={{ color: "var(--accent)" }}>₹{selectedOrder.totalAmount?.toFixed(2)}</span>
                   </div>
                 </div>
 
                 {/* Live Status Management Stepper Controls */}
-                <h3 style={{ fontSize: "1.1rem", marginBottom: "12px", fontFamily: "var(--display)" }}>Progress Order Stage</h3>
+                <h3 className="royal-title" style={{ fontSize: "1rem", marginBottom: "12px" }}>Progress Order Stage</h3>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
                   {selectedOrder.orderStatus === "Pending" && (
-                    <button onClick={() => handleUpdateStatus(selectedOrder.orderId, "Confirmed")} className="btn btn-primary" style={{ flexGrow: 1 }}>
+                    <button onClick={() => handleUpdateStatus(selectedOrder.orderId, "Confirmed")} className="royal-btn" style={{ flexGrow: 1 }}>
                       ✓ Confirm Order
                     </button>
                   )}
                   {(selectedOrder.orderStatus === "Confirmed" || selectedOrder.orderStatus === "Preparing" || selectedOrder.orderStatus === "Ready") && (
-                    <button onClick={() => handleUpdateStatus(selectedOrder.orderId, "Served")} className="btn btn-primary" style={{ flexGrow: 1, background: "#2dd4bf", color: "#0b0f19" }}>
+                    <button onClick={() => handleUpdateStatus(selectedOrder.orderId, "Served")} className="royal-btn" style={{ flexGrow: 1, background: "#2dd4bf !important", border: "1px solid #2dd4bf", color: "#011220 !important" }}>
                       🚀 Serve to Table
                     </button>
                   )}
                   {selectedOrder.orderStatus === "Served" && (
                     getCustomerName(selectedOrder.customerId).toLowerCase().includes("walk-in") ? (
-                      <div style={{ background: "rgba(223, 183, 67, 0.15)", border: "1px solid var(--accent)", padding: "16px", borderRadius: "12px", width: "100%" }}>
-                        <div style={{ fontWeight: "600", color: "white", marginBottom: "12px", textAlign: "center" }}>
-                          🏃 Walk-in Order Settlement
+                      <div className="royal-panel" style={{ background: "rgba(205, 162, 80, 0.05)", border: "1px solid var(--accent)", padding: "16px", width: "100%" }}>
+                        <div className="royal-subtitle" style={{ color: "white", marginBottom: "12px", textAlign: "center", fontStyle: "normal" }}>
+                          ⚜️ Walk-in Order Settlement
                         </div>
                         <div style={{ display: "flex", gap: "10px" }}>
                           <button 
                             type="button"
                             onClick={() => handleUpdateStatus(selectedOrder.orderId, "Paid")} 
-                            className="btn btn-primary" 
-                            style={{ flex: 1, background: "var(--success)", color: "#0b0f19", fontSize: "0.85rem", padding: "10px", margin: 0 }}
+                            className="royal-btn" 
+                            style={{ flex: 1, background: "var(--success) !important", border: "1px solid var(--success)", color: "#011220 !important", fontSize: "0.85rem", padding: "10px !important" }}
                           >
                             💵 Settle Cash
                           </button>
                           <button 
                             type="button"
                             onClick={() => handleOpenPayModal(selectedOrder)} 
-                            className="btn btn-primary" 
-                            style={{ flex: 1, background: "var(--accent)", color: "#0b0f19", fontSize: "0.85rem", padding: "10px", margin: 0 }}
+                            className="royal-btn-outline" 
+                            style={{ flex: 1, fontSize: "0.85rem", padding: "10px !important" }}
                           >
                             📱 Pay Online (QR)
                           </button>
                         </div>
                       </div>
                     ) : (
-                      <div style={{ background: "rgba(45, 212, 191, 0.15)", border: "1px solid #2dd4bf", color: "#2dd4bf", padding: "12px", borderRadius: "8px", width: "100%", textAlign: "center", fontWeight: "600", fontSize: "0.9rem" }}>
+                      <div style={{ background: "rgba(45, 212, 191, 0.15)", border: "1px solid #2dd4bf", color: "#2dd4bf", padding: "12px", width: "100%", textAlign: "center", fontWeight: "600", fontSize: "0.9rem" }}>
                         🍽️ Food Served. Awaiting Customer Payment...
                       </div>
                     )
                   )}
                   {selectedOrder.orderStatus === "Paid" && (
-                    <div style={{ background: "var(--success-bg)", border: "1px solid var(--success-border)", color: "var(--success)", padding: "12px", borderRadius: "8px", width: "100%", textAlign: "center", fontWeight: "600", fontSize: "0.9rem" }}>
+                    <div style={{ background: "rgba(16, 185, 129, 0.15)", border: "1px solid var(--success)", color: "var(--success)", padding: "12px", width: "100%", textAlign: "center", fontWeight: "600", fontSize: "0.9rem" }}>
                       💵 Order Completed & Paid
                     </div>
                   )}
@@ -580,8 +622,8 @@ export default function StaffDashboard({ loggedInUser }) {
               </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", minHeight: "350px", color: "var(--text-muted)" }}>
-                <div style={{ fontSize: "3rem", marginBottom: "15px" }}>👆</div>
-                <p>Select an order from the queue to view details and manage preparation status.</p>
+                <div style={{ fontSize: "3rem", marginBottom: "15px" }}>⚜️</div>
+                <p style={{ fontFamily: "var(--serif)", fontStyle: "italic" }}>Select an order from the queue to view details and manage preparation status.</p>
               </div>
             )}
           </div>
@@ -591,8 +633,8 @@ export default function StaffDashboard({ loggedInUser }) {
       {activeTab === "pos" && (
         <div className="split-layout">
           {/* POS Menu Grid */}
-          <div className="glass-panel" style={{ padding: "24px", textAlign: "left" }}>
-            <h2 style={{ fontFamily: "var(--display)", fontSize: "1.4rem", marginBottom: "16px" }}>Select Dishes</h2>
+          <div className="royal-panel" style={{ padding: "24px", textAlign: "left" }}>
+            <h2 className="royal-title" style={{ fontSize: "1.25rem", marginBottom: "16px" }}>Select Dishes</h2>
             {loadingMenu ? (
               <div className="flex-center" style={{ padding: "40px 0" }}>
                 <div className="spinner"></div>
@@ -604,19 +646,20 @@ export default function StaffDashboard({ loggedInUser }) {
                   return (
                     <div 
                       key={item.itemId} 
-                      className="glass-panel" 
+                      className="royal-panel" 
                       onClick={() => !isOutOfStock && addToPosCart(item)}
                       style={{ 
                         padding: "12px", 
                         cursor: isOutOfStock ? "not-allowed" : "pointer", 
                         opacity: isOutOfStock ? 0.4 : 1,
-                        background: "rgba(255, 255, 255, 0.01)" 
+                        background: "rgba(205, 162, 80, 0.02)",
+                        borderColor: "rgba(205, 162, 80, 0.15)"
                       }}
                     >
                       <div style={{ fontWeight: "600", color: "#ffffff", fontSize: "0.95rem", marginBottom: "4px" }}>{item.itemName}</div>
                       <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8rem" }}>
                         <span style={{ color: "var(--accent)" }}>₹{item.price}</span>
-                        <span style={{ color: "var(--text-muted)" }}>Qty: {item.availableQuantity}</span>
+                        <span style={{ color: isOutOfStock ? "var(--danger)" : "var(--text-secondary)" }}>Qty: {item.availableQuantity}</span>
                       </div>
                     </div>
                   );
@@ -626,13 +669,13 @@ export default function StaffDashboard({ loggedInUser }) {
           </div>
 
           {/* POS Cart Details & Guest details */}
-          <div className="glass-panel" style={{ padding: "24px", textAlign: "left" }}>
-            <h2 style={{ fontFamily: "var(--display)", fontSize: "1.4rem", marginBottom: "20px", borderBottom: "1px solid var(--border-glass)", paddingBottom: "10px" }}>Walk-in Guest Cart</h2>
+          <div className="royal-panel" style={{ padding: "24px", textAlign: "left" }}>
+            <h2 className="royal-title" style={{ fontSize: "1.25rem", marginBottom: "20px", borderBottom: "1px solid rgba(205, 162, 80, 0.2)", paddingBottom: "10px" }}>Walk-in Guest Cart</h2>
             
             <form onSubmit={submitPosOrder}>
               <div className="grid-2col-responsive" style={{ gap: "12px", marginBottom: "20px" }}>
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label>Guest Name</label>
+                  <label style={{ color: "var(--text-secondary)" }}>Guest Name</label>
                   <input 
                     type="text" 
                     placeholder="e.g. Table 4"
@@ -640,10 +683,11 @@ export default function StaffDashboard({ loggedInUser }) {
                     onChange={e => setWalkinName(e.target.value)} 
                     disabled={posLoading}
                     required
+                    style={{ border: "1px solid rgba(205, 162, 80, 0.2)", background: "rgba(0,0,0,0.2)", color: "white" }}
                   />
                 </div>
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label>Accompanying People</label>
+                  <label style={{ color: "var(--text-secondary)" }}>Accompanying People</label>
                   <input 
                     type="number" 
                     min="0"
@@ -651,13 +695,14 @@ export default function StaffDashboard({ loggedInUser }) {
                     value={walkinGuests} 
                     onChange={e => setWalkinGuests(e.target.value)} 
                     disabled={posLoading}
+                    style={{ border: "1px solid rgba(205, 162, 80, 0.2)", background: "rgba(0,0,0,0.2)", color: "white" }}
                   />
                 </div>
               </div>
 
               {/* POS Cart list */}
-              <h3 style={{ fontSize: "1rem", marginBottom: "10px", fontFamily: "var(--display)" }}>POS Cart Items</h3>
-              <div style={{ background: "rgba(0, 0, 0, 0.2)", borderRadius: "8px", padding: "10px 16px", marginBottom: "20px", minHeight: "150px", maxHeight: "250px", overflowY: "auto" }}>
+              <h3 className="royal-subtitle" style={{ fontSize: "1rem", marginBottom: "10px", fontStyle: "normal" }}>POS Cart Items</h3>
+              <div style={{ background: "rgba(0, 0, 0, 0.2)", border: "1px solid rgba(205, 162, 80, 0.12)", padding: "10px 16px", marginBottom: "20px", minHeight: "150px", maxHeight: "250px", overflowY: "auto" }}>
                 {posCart.length === 0 ? (
                   <div style={{ padding: "40px 0", color: "var(--text-muted)", fontSize: "0.85rem", textAlign: "center" }}>
                     Cart is empty. Click dishes on the left to add them.
@@ -681,7 +726,7 @@ export default function StaffDashboard({ loggedInUser }) {
 
               {/* Totals */}
               {posCart.length > 0 && (
-                <div style={{ borderTop: "1px solid var(--border-glass)", paddingTop: "12px", marginBottom: "20px" }}>
+                <div style={{ borderTop: "1px solid rgba(205, 162, 80, 0.2)", paddingTop: "12px", marginBottom: "20px" }}>
                   <div className="flex-between" style={{ fontSize: "0.85rem", marginBottom: "4px" }}>
                     <span>Subtotal:</span>
                     <span>₹{subtotal.toFixed(2)}</span>
@@ -690,7 +735,10 @@ export default function StaffDashboard({ loggedInUser }) {
                     <span>GST (18%):</span>
                     <span>₹{gst.toFixed(2)}</span>
                   </div>
-                  <div className="flex-between" style={{ fontSize: "1.1rem", fontWeight: "700", paddingTop: "8px", borderTop: "1px dotted var(--border-glass)" }}>
+                  
+                  <div className="royal-divider-gold"><span>♦</span></div>
+                  
+                  <div className="flex-between" style={{ fontSize: "1.1rem", fontWeight: "700", paddingTop: "4px" }}>
                     <span style={{ color: "#ffffff" }}>Total:</span>
                     <span style={{ color: "var(--accent)" }}>₹{total.toFixed(2)}</span>
                   </div>
@@ -699,8 +747,8 @@ export default function StaffDashboard({ loggedInUser }) {
 
               <button 
                 type="submit" 
-                className="btn btn-primary" 
-                style={{ width: "100%", padding: "12px" }}
+                className="royal-btn" 
+                style={{ width: "100%", padding: "12px", boxSizing: "border-box" }}
                 disabled={posLoading || posCart.length === 0}
               >
                 {posLoading ? "Submitting Order..." : "🔔 Submit POS Order"}
@@ -713,10 +761,10 @@ export default function StaffDashboard({ loggedInUser }) {
       {activeTab === "stock" && (
         <div className="split-layout animate-fade">
           {/* Left Side: Menu Items List */}
-          <div className="glass-panel" style={{ padding: "24px", textAlign: "left" }}>
+          <div className="royal-panel" style={{ padding: "24px", textAlign: "left" }}>
             <div className="flex-between" style={{ marginBottom: "20px" }}>
-              <h2 style={{ fontFamily: "var(--display)", fontSize: "1.4rem" }}>Menu Items</h2>
-              <button onClick={loadMenu} className="btn btn-secondary" style={{ padding: "6px 12px", fontSize: "0.85rem" }}>🔄 Reload Menu</button>
+              <h2 className="royal-title" style={{ fontSize: "1.25rem", margin: 0 }}>Menu Items</h2>
+              <button onClick={loadMenu} className="royal-btn-outline" style={{ padding: "6px 12px", fontSize: "0.8rem" }}>🔄 Reload Menu</button>
             </div>
 
             {loadingMenu ? (
@@ -725,29 +773,29 @@ export default function StaffDashboard({ loggedInUser }) {
               </div>
             ) : (
               <div style={{ maxHeight: "600px", overflow: "auto", paddingRight: "4px" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <table className="royal-table">
                   <thead>
                     <tr>
-                      <th style={{ padding: "10px 8px", borderBottom: "1px solid var(--border-glass)" }}>Dish</th>
-                      <th style={{ padding: "10px 8px", borderBottom: "1px solid var(--border-glass)" }}>Price</th>
-                      <th style={{ padding: "10px 8px", borderBottom: "1px solid var(--border-glass)", textAlign: "center" }}>Stock Level</th>
+                      <th>Dish</th>
+                      <th>Price</th>
+                      <th style={{ textAlign: "center" }}>Stock Level</th>
                     </tr>
                   </thead>
                   <tbody>
                     {menuItems.map(item => (
-                      <tr key={item.itemId} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.05)" }}>
-                        <td style={{ padding: "12px 8px" }}>
+                      <tr key={item.itemId}>
+                        <td>
                           <div style={{ fontWeight: "600", color: "#ffffff" }}>{item.itemName}</div>
-                          <span className="role-badge customer" style={{ fontSize: "0.75rem", background: "none", padding: 0 }}>{item.category}</span>
+                          <span style={{ fontSize: "0.75rem", color: "var(--accent)" }}>{item.category}</span>
                         </td>
-                        <td style={{ padding: "12px 8px", color: "var(--accent)" }}>₹{item.price.toFixed(2)}</td>
-                        <td style={{ padding: "12px 8px", textAlign: "center" }}>
+                        <td style={{ color: "var(--accent)" }}>₹{item.price.toFixed(2)}</td>
+                        <td>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
                             <button 
                               type="button"
                               onClick={() => handleDownstock(item)} 
-                              className="btn btn-glass" 
-                              style={{ width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, minWidth: "auto", borderRadius: "4px" }}
+                              className="royal-btn-outline" 
+                              style={{ width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, minWidth: "auto" }}
                               disabled={item.availableQuantity <= 0}
                             >
                               -
@@ -764,8 +812,8 @@ export default function StaffDashboard({ loggedInUser }) {
                             <button 
                               type="button"
                               onClick={() => handleUpstock(item)} 
-                              className="btn btn-glass" 
-                              style={{ width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, minWidth: "auto", borderRadius: "4px" }}
+                              className="royal-btn-outline" 
+                              style={{ width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, minWidth: "auto" }}
                             >
                               +
                             </button>
@@ -780,8 +828,8 @@ export default function StaffDashboard({ loggedInUser }) {
           </div>
 
           {/* Right Side: Add New Dish Form */}
-          <div className="glass-panel" style={{ padding: "24px", textAlign: "left", height: "fit-content" }}>
-            <h2 style={{ fontFamily: "var(--display)", fontSize: "1.3rem", marginBottom: "20px" }}>Add New Dish</h2>
+          <div className="royal-panel" style={{ padding: "24px", textAlign: "left", height: "fit-content" }}>
+            <h2 className="royal-title" style={{ fontSize: "1.25rem", marginBottom: "20px" }}>Add New Dish</h2>
             
             <form onSubmit={handleAddMenuItem} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
               <div className="form-group">
@@ -792,13 +840,13 @@ export default function StaffDashboard({ loggedInUser }) {
                   value={addName} 
                   onChange={e => setAddName(e.target.value)} 
                   required
-                  style={{ width: "100%" }}
+                  style={{ width: "100%", border: "1px solid rgba(205, 162, 80, 0.2)", background: "rgba(0,0,0,0.2)", color: "white" }}
                 />
               </div>
 
               <div className="form-group">
                 <label style={{ color: "var(--text-secondary)", marginBottom: "6px", display: "block" }}>Category *</label>
-                <select value={addCategory} onChange={e => setAddCategory(e.target.value)} style={{ width: "100%", padding: "10px", background: "rgba(0,0,0,0.2)", border: "1px solid var(--border-glass)", borderRadius: "8px", color: "white" }}>
+                <select value={addCategory} onChange={e => setAddCategory(e.target.value)} style={{ width: "100%", padding: "10px", background: "rgba(0,0,0,0.2)", border: "1px solid rgba(205, 162, 80, 0.2)", color: "white" }}>
                   <option value="Starters">Starters</option>
                   <option value="Mains">Mains</option>
                   <option value="Desserts">Desserts</option>
@@ -813,7 +861,7 @@ export default function StaffDashboard({ loggedInUser }) {
                   placeholder="Describe ingredients, allergen warnings..."
                   value={addDescription} 
                   onChange={e => setAddDescription(e.target.value)}
-                  style={{ width: "100%", padding: "10px", background: "rgba(0,0,0,0.2)", border: "1px solid var(--border-glass)", borderRadius: "8px", color: "white", fontFamily: "inherit" }}
+                  style={{ width: "100%", padding: "10px", background: "rgba(0,0,0,0.2)", border: "1px solid rgba(205, 162, 80, 0.2)", color: "white", fontFamily: "inherit" }}
                 />
               </div>
 
@@ -827,7 +875,7 @@ export default function StaffDashboard({ loggedInUser }) {
                     value={addPrice} 
                     onChange={e => setAddPrice(e.target.value)} 
                     required
-                    style={{ width: "100%" }}
+                    style={{ width: "100%", border: "1px solid rgba(205, 162, 80, 0.2)", background: "rgba(0,0,0,0.2)", color: "white" }}
                   />
                 </div>
                 <div className="form-group">
@@ -838,12 +886,12 @@ export default function StaffDashboard({ loggedInUser }) {
                     value={addQuantity} 
                     onChange={e => setAddQuantity(e.target.value)} 
                     required
-                    style={{ width: "100%" }}
+                    style={{ width: "100%", border: "1px solid rgba(205, 162, 80, 0.2)", background: "rgba(0,0,0,0.2)", color: "white" }}
                   />
                 </div>
               </div>
 
-              <button type="submit" className="btn btn-primary" style={{ width: "100%", padding: "12px", marginTop: "10px" }}>
+              <button type="submit" className="royal-btn" style={{ width: "100%", padding: "12px", marginTop: "10px" }}>
                 ➕ Create Menu Item
               </button>
             </form>
@@ -866,18 +914,17 @@ export default function StaffDashboard({ loggedInUser }) {
           zIndex: 1000,
           padding: "20px"
         }}>
-          <div className="glass-panel animate-fade" style={{
+          <div className="royal-panel animate-fade" style={{
             maxWidth: "450px",
             width: "100%",
             padding: "30px",
             textAlign: "center",
             border: "1px solid var(--accent)",
-            background: "linear-gradient(135deg, #0a192f 0%, #020d17 100%)",
-            borderRadius: "16px",
-            boxShadow: "0 20px 40px rgba(0, 0, 0, 0.5)"
+            background: "linear-gradient(135deg, #021222 0%, #032037 100%)",
+            boxShadow: "0 20px 40px rgba(0, 0, 0, 0.6)"
           }}>
-            <h2 style={{ fontFamily: "var(--display)", color: "var(--accent)", marginBottom: "10px" }}>Dine & Desk</h2>
-            <h3 style={{ color: "white", marginBottom: "20px", fontSize: "1.2rem" }}>Scan to Pay Online</h3>
+            <h2 className="royal-title" style={{ color: "var(--accent)", marginBottom: "10px", fontSize: "1.5rem" }}>Taste Royale</h2>
+            <h3 className="royal-subtitle" style={{ color: "white", marginBottom: "20px", fontSize: "1.1rem", fontStyle: "italic" }}>Scan to Pay Online</h3>
             
             <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", marginBottom: "15px" }}>
               Order ID: <strong style={{ color: "white" }}>{payOrder.orderId}</strong>
@@ -887,10 +934,10 @@ export default function StaffDashboard({ loggedInUser }) {
             <div style={{
               background: "white",
               padding: "16px",
-              borderRadius: "12px",
               display: "inline-block",
               marginBottom: "20px",
-              boxShadow: "0 8px 16px rgba(0,0,0,0.15)"
+              boxShadow: "0 8px 16px rgba(0,0,0,0.2)",
+              border: "1px solid var(--accent)"
             }}>
               <img 
                 src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&color=030d17&data=${encodeURIComponent(`upi://pay?pa=dinedesk@upi&pn=Dine%20And%20Desk&am=${payOrder.totalAmount.toFixed(2)}&cu=INR&tn=Bill%20Order%20${payOrder.orderId}`)}`} 
@@ -901,9 +948,8 @@ export default function StaffDashboard({ loggedInUser }) {
 
             {/* Bill Summary inside Modal */}
             <div style={{
-              background: "rgba(255, 255, 255, 0.02)",
-              border: "1px solid var(--border-glass)",
-              borderRadius: "8px",
+              background: "rgba(205, 162, 80, 0.02)",
+              border: "1px solid rgba(205, 162, 80, 0.15)",
               padding: "12px 16px",
               marginBottom: "24px",
               textAlign: "left",
@@ -917,17 +963,20 @@ export default function StaffDashboard({ loggedInUser }) {
                 <span>GST (18%):</span>
                 <span>₹{payOrder.gst?.toFixed(2)}</span>
               </div>
-              <div className="flex-between" style={{ fontSize: "1.1rem", fontWeight: "700", borderTop: "1px dotted var(--border-glass)", paddingTop: "8px", marginTop: "4px" }}>
+              
+              <div className="royal-divider-gold"><span>♦</span></div>
+              
+              <div className="flex-between" style={{ fontSize: "1.1rem", fontWeight: "700", paddingTop: "4px" }}>
                 <span style={{ color: "white" }}>Total Amount:</span>
                 <span style={{ color: "var(--accent)" }}>₹{payOrder.totalAmount?.toFixed(2)}</span>
               </div>
             </div>
 
             <div style={{ display: "flex", gap: "12px" }}>
-              <button type="button" onClick={handleClosePayModal} className="btn btn-secondary" style={{ flex: 1, padding: "12px" }}>
+              <button type="button" onClick={handleClosePayModal} className="royal-btn-outline" style={{ flex: 1, padding: "12px" }}>
                 Cancel
               </button>
-              <button type="button" onClick={handleSimulateOnlinePay} className="btn btn-primary" style={{ flex: 2, padding: "12px" }}>
+              <button type="button" onClick={handleSimulateOnlinePay} className="royal-btn" style={{ flex: 2, padding: "12px" }}>
                 💳 Simulate Payment
               </button>
             </div>

@@ -43,6 +43,16 @@ export default function CustomerDashboard() {
 
   // Enforce paying bill before checking out
   const handleCheckout = () => {
+    if (orders.length === 0) {
+      if (window.confirm("Would you like to cancel your visit, release this table, and exit to the home page?")) {
+        localStorage.removeItem("customerId");
+        localStorage.removeItem("customerName");
+        localStorage.removeItem("partySize");
+        navigate("/");
+      }
+      return;
+    }
+
     const hasUnpaid = orders.some(order => order.orderStatus !== "Paid");
     
     if (hasUnpaid) {
@@ -121,41 +131,41 @@ export default function CustomerDashboard() {
   return (
     <div className="container animate-fade">
       {/* Welcome & Session Card */}
-      <div className="glass-panel no-print" style={{ padding: "30px", marginBottom: "30px", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "20px" }}>
+      <div className="royal-panel no-print" style={{ padding: "30px", marginBottom: "30px", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "20px" }}>
         <div>
-          <span className="role-badge customer" style={{ marginBottom: "10px", display: "inline-block" }}>Table Dining Session</span>
-          <h1 style={{ fontSize: "2rem", marginBottom: "6px" }}>Welcome, {customerName}!</h1>
+          <span className="role-badge customer" style={{ marginBottom: "10px", display: "inline-block", borderColor: "var(--accent)" }}>Taste Royale Guest</span>
+          <h1 className="royal-title" style={{ fontSize: "2rem", marginBottom: "6px" }}>Welcome, {customerName}!</h1>
           <p style={{ color: "var(--text-secondary)" }}>
-            Session ID: <strong style={{ color: "#ffffff" }}>{customerId.substring(0, 8)}...</strong> &middot; Guests: <strong style={{ color: "#ffffff" }}>{partySize}</strong>
+            Session ID: <strong style={{ color: "var(--accent)" }}>{customerId.substring(0, 8)}...</strong> &middot; Guests: <strong style={{ color: "#ffffff" }}>{partySize}</strong>
           </p>
         </div>
-        <div style={{ display: "flex", gap: "12px" }}>
-          <Link to="/menu" className="btn btn-primary" style={{ padding: "12px 24px" }}>
+        <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+          <Link to="/menu" className="royal-btn" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
             🍽️ Order Food
           </Link>
-          <button onClick={handleCheckout} className="btn btn-danger" style={{ padding: "12px 20px" }}>
-            🚪 Checkout / End Session
+          <button onClick={handleCheckout} className="royal-btn-outline" style={{ borderColor: "rgba(239, 68, 68, 0.4)", color: "#f87171" }}>
+            {orders.length === 0 ? "🚪 Cancel Visit & Exit" : "🚪 Checkout / End"}
           </button>
         </div>
       </div>
 
       {/* Quick Actions Bar */}
-      <div className="no-print" style={{ display: "flex", gap: "12px", marginBottom: "24px" }}>
-        <Link to="/menu" className="btn btn-primary">
+      <div className="no-print" style={{ display: "flex", gap: "12px", marginBottom: "24px", flexWrap: "wrap" }}>
+        <Link to="/menu" className="royal-btn" style={{ textDecoration: "none" }}>
           🍽️ Order More Food
         </Link>
-        <button onClick={loadCustomerOrders} className="btn btn-secondary">
-          🔄 Refresh Orders List
+        <button onClick={loadCustomerOrders} className="royal-btn-outline">
+          🔄 Refresh List
         </button>
       </div>
 
       <div className="split-layout">
         {/* Left Panel: Active / Past Orders */}
-        <div className="glass-panel no-print" style={{ padding: "30px", textAlign: "left" }}>
-          <h2 style={{ marginBottom: "20px", fontFamily: "var(--display)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div className="royal-panel no-print" style={{ padding: "30px", textAlign: "left" }}>
+          <h2 className="royal-title" style={{ marginBottom: "20px", fontSize: "1.4rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span>Your Visit Orders</span>
             {orders.length > 0 && (
-              <span style={{ fontSize: "0.95rem", color: "var(--text-secondary)", fontWeight: "normal" }}>
+              <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)", fontWeight: "normal", letterSpacing: "normal", textTransform: "none" }}>
                 Total Placed: {orders.length}
               </span>
             )}
@@ -169,27 +179,36 @@ export default function CustomerDashboard() {
             <div style={{ textAlign: "center", padding: "40px 20px", color: "var(--text-muted)" }}>
               <div style={{ fontSize: "3rem", marginBottom: "15px" }}>🛒</div>
               <p style={{ fontSize: "1.1rem", marginBottom: "20px" }}>You haven't placed any orders yet.</p>
-              <Link to="/menu" className="btn btn-primary">
-                Open Menu
-              </Link>
+              <div style={{ display: "flex", justifyContent: "center", gap: "12px", flexWrap: "wrap" }}>
+                <Link to="/menu" className="royal-btn" style={{ textDecoration: "none" }}>
+                  🍽️ Open Menu
+                </Link>
+                <button 
+                  onClick={handleCheckout} 
+                  className="royal-btn-outline" 
+                  style={{ borderColor: "rgba(239, 68, 68, 0.4)", color: "#f87171" }}
+                >
+                  🚪 Cancel Visit / Exit
+                </button>
+              </div>
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
               {orders.map((order) => (
                 <div 
                   key={order.orderId} 
-                  className="glass-panel" 
+                  className="royal-panel" 
                   style={{ 
                     padding: "20px", 
-                    background: "rgba(255, 255, 255, 0.02)", 
-                    borderColor: order.orderStatus === "Pending" ? "var(--warning)" : "var(--border-glass)",
+                    background: "rgba(205, 162, 80, 0.03)", 
+                    borderColor: order.orderStatus === "Pending" ? "rgba(245, 158, 11, 0.4)" : "rgba(205, 162, 80, 0.18)",
                     position: "relative"
                   }}
                 >
                   <div style={{ width: "100%" }}>
                     <div className="flex-center" style={{ justifyContent: "flex-start", gap: "10px", marginBottom: "8px" }}>
-                      <strong style={{ color: "#ffffff" }}>{order.orderId}</strong>
-                      <span className={`status-badge ${order.orderStatus.toLowerCase()}`}>
+                      <strong className="royal-subtitle" style={{ color: "#ffffff", fontStyle: "normal" }}>Order: {order.orderId}</strong>
+                      <span className={`status-badge ${order.orderStatus.toLowerCase()}`} style={{ border: "1px solid rgba(205, 162, 80, 0.2)" }}>
                         {order.orderStatus}
                       </span>
                     </div>
@@ -203,9 +222,9 @@ export default function CustomerDashboard() {
                     {/* Friendly conversational order tracking block */}
                     <div style={{ 
                       padding: "10px 14px", 
-                      borderRadius: "6px", 
-                      background: "rgba(255,255,255,0.02)", 
-                      border: "1px solid rgba(255,255,255,0.05)",
+                      borderRadius: "0px", 
+                      background: "rgba(0,0,0,0.2)", 
+                      border: "1px solid rgba(205, 162, 80, 0.12)",
                       display: "flex", 
                       alignItems: "center", 
                       gap: "10px" 
@@ -222,7 +241,7 @@ export default function CustomerDashboard() {
                           order.orderStatus === "Served" ? "var(--accent)" : "#64748b",
                         animation: order.orderStatus === "Confirmed" || order.orderStatus === "Preparing" || order.orderStatus === "Pending" ? "pulseStatus 1.5s infinite" : "none"
                       }} />
-                      <span style={{ fontSize: "0.88rem", color: "var(--text-secondary)" }}>
+                      <span style={{ fontSize: "0.88rem", color: "var(--text-secondary)", fontStyle: "italic" }}>
                         {order.orderStatus === "Pending" && "⏳ Awaiting chef confirmation. Any new items you just added will be approved shortly."}
                         {(order.orderStatus === "Confirmed" || order.orderStatus === "Preparing" || order.orderStatus === "Ready") && "✅ Order confirmed! Your food is being prepared and will be served shortly."}
                         {order.orderStatus === "Served" && "🍽️ All items served. Bon appétit!"}
@@ -239,10 +258,10 @@ export default function CustomerDashboard() {
         {/* Right Panel: Combined Billing Summary */}
         <div style={{ display: "flex", flexDirection: "column", gap: "30px" }}>
           {orders.length > 0 && (
-            <div className="glass-panel" style={{ padding: "30px", textAlign: "left", borderColor: hasUnpaidOrders ? "var(--warning)" : "var(--success)" }}>
-              <div className="flex-between" style={{ marginBottom: "16px", borderBottom: "1px solid var(--border-glass)", paddingBottom: "12px" }}>
-                <h3 style={{ fontFamily: "var(--display)", fontSize: "1.25rem" }}>🧾 Combined Table Bill</h3>
-                <span className={`status-badge ${hasUnpaidOrders ? "unpaid" : "paid"}`}>
+            <div className="royal-panel" style={{ padding: "30px", textAlign: "left", border: "1px solid var(--accent-border)" }}>
+              <div className="flex-between" style={{ marginBottom: "16px", borderBottom: "1px solid rgba(205, 162, 80, 0.2)", paddingBottom: "12px" }}>
+                <h3 className="royal-title" style={{ fontSize: "1.1rem" }}>⚜️ Combined Bill</h3>
+                <span className={`status-badge ${hasUnpaidOrders ? "unpaid" : "paid"}`} style={{ border: "1px solid rgba(205, 162, 80, 0.2)" }}>
                   {hasUnpaidOrders ? "Pending Payment" : "Visit Settled"}
                 </span>
               </div>
@@ -251,13 +270,16 @@ export default function CustomerDashboard() {
               <div style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "0.9rem", marginBottom: "24px" }}>
                 <div className="flex-between">
                   <span>Subtotal:</span>
-                  <span>₹{combinedSubtotal.toFixed(2)}</span>
+                  <span style={{ color: "#ffffff" }}>₹{combinedSubtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex-between" style={{ color: "var(--text-muted)" }}>
                   <span>GST (18%):</span>
                   <span>₹{combinedGst.toFixed(2)}</span>
                 </div>
-                <div className="flex-between" style={{ fontSize: "1.25rem", fontWeight: "700", borderTop: "1px dotted var(--border-glass)", paddingTop: "10px", marginTop: "4px" }}>
+                
+                <div className="royal-divider-gold"><span>♦</span></div>
+                
+                <div className="flex-between" style={{ fontSize: "1.25rem", fontWeight: "700", paddingTop: "4px", marginTop: "4px" }}>
                   <span style={{ color: "#ffffff" }}>Grand Total:</span>
                   <span style={{ color: "var(--accent)" }}>₹{combinedTotal.toFixed(2)}</span>
                 </div>
@@ -266,14 +288,13 @@ export default function CustomerDashboard() {
               {/* Link to view bill and pay */}
               <Link 
                 to={`/track/${orders[0].orderId}`} 
-                className="btn btn-primary" 
+                className="royal-btn" 
                 style={{ 
                   width: "100%", 
-                  padding: "14px", 
-                  fontWeight: "700", 
                   display: "block", 
                   textAlign: "center",
-                  textDecoration: "none"
+                  textDecoration: "none",
+                  boxSizing: "border-box"
                 }}
               >
                 📄 View Combined Bill

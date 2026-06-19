@@ -24,7 +24,7 @@ function Navbar({ loggedInUser, handleLogout }) {
           </Link>
         </div>
         <nav className="nav-links">
-          <Link to="/" className="btn btn-glass">Back to Site</Link>
+          <Link to="/" className="btn btn-glass">Home</Link>
           {loggedInUser && (
             <div className="nav-user">
               <span className="role-badge staff">{loggedInUser.fullName}</span>
@@ -63,6 +63,14 @@ function Navbar({ loggedInUser, handleLogout }) {
       element.scrollIntoView({ behavior: "smooth" });
     }
   };
+
+  const handleHomeClick = (e) => {
+    if (location.pathname === "/") {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
   const hasCustomerSession = !!localStorage.getItem("customerId");
 
   return (
@@ -87,7 +95,7 @@ function Navbar({ loggedInUser, handleLogout }) {
       }}
     >
       <div className="brand">
-        <Link to="/" style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+        <Link to="/" onClick={handleHomeClick} style={{ display: "flex", gap: "8px", alignItems: "center" }}>
           <span style={{ fontFamily: "var(--serif)", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: "700", fontSize: "1.7rem" }}>
             Dine<span style={{ color: "var(--accent)" }}>&</span>Desk
           </span>
@@ -95,9 +103,7 @@ function Navbar({ loggedInUser, handleLogout }) {
       </div>
 
       <nav className="nav-links" style={{ gap: "20px" }}>
-        {!hasCustomerSession && (
-          <Link to="/" style={navItemStyle} onMouseOver={e => e.target.style.color = "var(--accent)"} onMouseOut={e => e.target.style.color = "#ffffff"}>Home</Link>
-        )}
+        <Link to="/" style={navItemStyle} onClick={handleHomeClick} onMouseOver={e => e.target.style.color = "var(--accent)"} onMouseOut={e => e.target.style.color = "#ffffff"}>Home</Link>
         
         <Link to="/menu" style={navItemStyle} onMouseOver={e => e.target.style.color = "var(--accent)"} onMouseOut={e => e.target.style.color = "#ffffff"}>Menu</Link>
         
@@ -185,6 +191,16 @@ function AppFooter() {
 }
 
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+}
+
 function App() {
   const [loggedInUser, setLoggedInUser] = useState(null);
 
@@ -218,6 +234,7 @@ function App() {
 
   return (
     <Router>
+      <ScrollToTop />
       <Navbar loggedInUser={loggedInUser} handleLogout={handleLogout} />
 
       <main style={{ flexGrow: 1 }}>

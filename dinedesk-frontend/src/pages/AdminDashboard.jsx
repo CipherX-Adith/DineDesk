@@ -314,6 +314,19 @@ export default function AdminDashboard({ loggedInUser }) {
     return c ? c.partySize : "N/A";
   };
 
+  const getCleanCustomerName = (fullName) => {
+    if (!fullName) return "N/A";
+    if (fullName.startsWith("Walk-in (") && fullName.endsWith(")")) {
+      return fullName.substring(9, fullName.length - 1);
+    }
+    return fullName;
+  };
+
+  const getCustomerType = (fullName) => {
+    if (!fullName) return "Dine-in (Web)";
+    return fullName.startsWith("Walk-in (") ? "Walk-in" : "Dine-in (Web)";
+  };
+
   const getUnpaidCustomers = () => {
     // Group orders by customerId
     const customerOrdersMap = {};
@@ -401,6 +414,18 @@ export default function AdminDashboard({ loggedInUser }) {
   const paidSales = orders.filter(o => o.orderStatus === "Paid").reduce((sum, o) => sum + (o.totalAmount || 0), 0);
   const totalOrdersCount = orders.length;
   const averageOrderVal = totalOrdersCount > 0 ? totalSales / totalOrdersCount : 0;
+
+  // Walk-in Sales vs Dine-in Web Sales
+  const walkinSales = orders
+    .filter(o => getCustomerName(o.customerId).startsWith("Walk-in ("))
+    .reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+  
+  const dineinSales = orders
+    .filter(o => !getCustomerName(o.customerId).startsWith("Walk-in ("))
+    .reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+
+  const walkinOrdersCount = orders.filter(o => getCustomerName(o.customerId).startsWith("Walk-in (")).length;
+  const dineinOrdersCount = orders.filter(o => !getCustomerName(o.customerId).startsWith("Walk-in (")).length;
   
   // Low Stock Level warning
   const lowStockItems = menuItems.filter(item => item.availableQuantity <= 10 && !ignoredItemIds.includes(item.itemId));
@@ -487,11 +512,11 @@ export default function AdminDashboard({ loggedInUser }) {
       {/* Flashing Low Stock Alert Banner */}
       {lowStockCount > 0 && (
         <div 
-          className="glass-panel" 
+          className="royal-panel" 
           style={{ 
             padding: "16px 24px", 
             marginBottom: "20px", 
-            borderLeft: "5px solid var(--danger)", 
+            borderLeft: "5px solid var(--danger) !important", 
             background: "rgba(239, 68, 68, 0.08)",
             textAlign: "left",
             display: "flex",
@@ -508,15 +533,15 @@ export default function AdminDashboard({ loggedInUser }) {
           </div>
           <div style={{ display: "flex", gap: "10px" }}>
             <button 
-              className="btn btn-secondary" 
-              style={{ fontSize: "0.8rem", padding: "6px 12px", border: "1px solid var(--danger-border)", color: "var(--danger)" }}
+              className="royal-btn" 
+              style={{ fontSize: "0.8rem", padding: "8px 16px" }}
               onClick={() => setActiveTab("menu")}
             >
               Review Stock
             </button>
             <button 
-              className="btn btn-glass" 
-              style={{ fontSize: "0.8rem", padding: "6px 12px" }}
+              className="royal-btn-outline" 
+              style={{ fontSize: "0.8rem", padding: "8px 16px" }}
               onClick={() => {
                 const newIgnored = [...ignoredItemIds, ...lowStockItems.map(item => item.itemId)];
                 setIgnoredItemIds(newIgnored);
@@ -529,59 +554,120 @@ export default function AdminDashboard({ loggedInUser }) {
         </div>
       )}
 
-      {/* Dashboard Top Header */}
-      <div className="glass-panel" style={{ padding: "20px 30px", marginBottom: "30px", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px" }}>
-        <div>
-          <h1 style={{ fontSize: "2rem", fontFamily: "var(--display)" }}>Admin Dashboard</h1>
-          <p style={{ color: "var(--text-secondary)" }}>Superuser Portal &middot; Manager: <strong style={{ color: "white" }}>{loggedInUser?.fullName}</strong></p>
+      {/* Main Dashboard Layout: Left Sidebar & Right Content */}
+      <div className="admin-dashboard-layout">
+        {/* Left Sidebar */}
+        <div className="royal-panel admin-sidebar">
+          <div>
+            <h1 className="royal-title" style={{ fontSize: "1.8rem", margin: 0 }}>Admin Portal</h1>
+            <p style={{ color: "var(--text-secondary)", margin: "8px 0 0 0", fontSize: "0.85rem" }}>
+              Superuser Portal<br />
+              Manager: <strong style={{ color: "var(--accent)" }}>{loggedInUser?.fullName}</strong>
+            </p>
+          </div>
+          
+          <div className="royal-divider-gold" style={{ margin: "10px 0" }}><span>♦</span></div>
+
+          <div className="vertical-tab-list">
+            <button className={`vertical-tab-btn ${activeTab === "analytics" ? "active" : ""}`} onClick={() => setActiveTab("analytics")}>📈 Reports & Analytics</button>
+            <button className={`vertical-tab-btn ${activeTab === "menu" ? "active" : ""}`} onClick={() => setActiveTab("menu")}>🍔 Menu Management</button>
+            <button className={`vertical-tab-btn ${activeTab === "cashier" ? "active" : ""}`} onClick={() => setActiveTab("cashier")}>🛎️ Cash Counter</button>
+            <button className={`vertical-tab-btn ${activeTab === "users" ? "active" : ""}`} onClick={() => setActiveTab("users")}>👥 Staff Directory</button>
+          </div>
         </div>
-        <div className="tab-headers" style={{ marginBottom: 0 }}>
-          <button className={`tab-btn ${activeTab === "analytics" ? "active" : ""}`} onClick={() => setActiveTab("analytics")}>📈 Reports & Analytics</button>
-          <button className={`tab-btn ${activeTab === "menu" ? "active" : ""}`} onClick={() => setActiveTab("menu")}>🍔 Menu Management</button>
-          <button className={`tab-btn ${activeTab === "cashier" ? "active" : ""}`} onClick={() => setActiveTab("cashier")}>🛎️ Cash Counter</button>
-          <button className={`tab-btn ${activeTab === "users" ? "active" : ""}`} onClick={() => setActiveTab("users")}>👥 Staff Directory</button>
-        </div>
-      </div>
+
+        {/* Right Main Content */}
+        <div style={{ flex: 1, minWidth: 0 }}>
 
       {/* Analytics Tab */}
       {activeTab === "analytics" && (
         <div className="animate-fade">
           {/* Stat metrics cards */}
           <div className="dashboard-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
-            <div className="glass-panel stat-card">
-              <div className="stat-icon">💰</div>
-              <div className="stat-label">Total Revenue</div>
-              <div className="stat-value">₹{totalSales.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+            <div className="royal-panel stat-card" style={{ background: "rgba(205, 162, 80, 0.02)", borderColor: "rgba(205, 162, 80, 0.15)" }}>
+              <div className="stat-icon" style={{ color: "var(--accent)" }}>💰</div>
+              <div className="stat-label" style={{ color: "var(--text-secondary)" }}>Total Revenue</div>
+              <div className="stat-value" style={{ color: "white" }}>₹{totalSales.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
               <p style={{ fontSize: "0.85rem", color: "var(--success)" }}>Completed Sales: ₹{paidSales.toFixed(2)}</p>
             </div>
 
-            <div className="glass-panel stat-card">
-              <div className="stat-icon">📅</div>
-              <div className="stat-label">Daily Revenue</div>
-              <div className="stat-value">₹{dailyRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+            <div className="royal-panel stat-card" style={{ background: "rgba(205, 162, 80, 0.02)", borderColor: "rgba(205, 162, 80, 0.15)" }}>
+              <div className="stat-icon" style={{ color: "var(--accent)" }}>📅</div>
+              <div className="stat-label" style={{ color: "var(--text-secondary)" }}>Daily Revenue</div>
+              <div className="stat-value" style={{ color: "white" }}>₹{dailyRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
               <p style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>Sales placed today</p>
             </div>
             
-            <div className="glass-panel stat-card">
-              <div className="stat-icon">📥</div>
-              <div className="stat-label">Total Orders</div>
-              <div className="stat-value">{totalOrdersCount}</div>
+            <div className="royal-panel stat-card" style={{ background: "rgba(205, 162, 80, 0.02)", borderColor: "rgba(205, 162, 80, 0.15)" }}>
+              <div className="stat-icon" style={{ color: "var(--accent)" }}>📥</div>
+              <div className="stat-label" style={{ color: "var(--text-secondary)" }}>Total Orders</div>
+              <div className="stat-value" style={{ color: "white" }}>{totalOrdersCount}</div>
               <p style={{ fontSize: "0.85rem" }}>Avg. order size: ₹{averageOrderVal.toFixed(2)}</p>
             </div>
 
-            <div className="glass-panel stat-card">
-              <div className="stat-icon">⏰</div>
-              <div className="stat-label">Peak Dining Hours</div>
-              <div className="stat-value" style={{ fontSize: "1.35rem", padding: "10px 0" }}>{peakHours}</div>
+            <div className="royal-panel stat-card" style={{ background: "rgba(205, 162, 80, 0.02)", borderColor: "rgba(205, 162, 80, 0.15)" }}>
+              <div className="stat-icon" style={{ color: "var(--accent)" }}>⏰</div>
+              <div className="stat-label" style={{ color: "var(--text-secondary)" }}>Peak Dining Hours</div>
+              <div className="stat-value" style={{ fontSize: "1.35rem", padding: "10px 0", color: "white" }}>{peakHours}</div>
               <p style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>Based on order volume</p>
+            </div>
+          </div>
+
+          {/* Order Source Revenue & Stats Split */}
+          <div className="royal-panel" style={{ padding: "30px", marginTop: "30px", textAlign: "left" }}>
+            <h3 className="royal-title" style={{ fontSize: "1.25rem", marginBottom: "20px" }}>⚜️ Order Source Revenue Split</h3>
+            <div className="grid-2col-responsive" style={{ gap: "30px" }}>
+              {/* Left Side: Summary Cards */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                <div style={{ padding: "16px", background: "rgba(168, 85, 247, 0.03)", border: "1px solid rgba(168, 85, 247, 0.2)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <span style={{ fontSize: "0.85rem", color: "#c084fc", fontWeight: "600", textTransform: "uppercase" }}>Walk-in Customers</span>
+                    <h4 style={{ fontSize: "1.6rem", color: "white", margin: "4px 0 0 0" }}>₹{walkinSales.toLocaleString(undefined, { minimumFractionDigits: 2 })}</h4>
+                    <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "4px" }}>Orders: {walkinOrdersCount}</p>
+                  </div>
+                  <div style={{ fontSize: "2rem" }}>🛎️</div>
+                </div>
+
+                <div style={{ padding: "16px", background: "rgba(16, 185, 129, 0.03)", border: "1px solid rgba(16, 185, 129, 0.2)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <span style={{ fontSize: "0.85rem", color: "#34d399", fontWeight: "600", textTransform: "uppercase" }}>Dine-in (Web) Customers</span>
+                    <h4 style={{ fontSize: "1.6rem", color: "white", margin: "4px 0 0 0" }}>₹{dineinSales.toLocaleString(undefined, { minimumFractionDigits: 2 })}</h4>
+                    <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "4px" }}>Orders: {dineinOrdersCount}</p>
+                  </div>
+                  <div style={{ fontSize: "2rem" }}>🌐</div>
+                </div>
+              </div>
+
+              {/* Right Side: Split Chart/Progress Representation */}
+              <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", gap: "20px" }}>
+                <div>
+                  <div className="flex-between" style={{ fontSize: "0.9rem", marginBottom: "8px" }}>
+                    <strong style={{ color: "#c084fc" }}>Walk-in Share</strong>
+                    <span style={{ color: "white" }}>{totalSales > 0 ? ((walkinSales / totalSales) * 100).toFixed(1) : 0}%</span>
+                  </div>
+                  <div style={{ background: "rgba(255,255,255,0.05)", height: "12px", borderRadius: "6px", overflow: "hidden" }}>
+                    <div style={{ background: "#a855f7", width: `${totalSales > 0 ? (walkinSales / totalSales) * 100 : 0}%`, height: "100%" }}></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex-between" style={{ fontSize: "0.9rem", marginBottom: "8px" }}>
+                    <strong style={{ color: "#34d399" }}>Dine-in (Web) Share</strong>
+                    <span style={{ color: "white" }}>{totalSales > 0 ? ((dineinSales / totalSales) * 100).toFixed(1) : 0}%</span>
+                  </div>
+                  <div style={{ background: "rgba(255,255,255,0.05)", height: "12px", borderRadius: "6px", overflow: "hidden" }}>
+                    <div style={{ background: "#10b981", width: `${totalSales > 0 ? (dineinSales / totalSales) * 100 : 0}%`, height: "100%" }}></div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Sub layouts: Low stock list and Category graph */}
           <div className="split-layout" style={{ marginTop: "30px" }}>
             {/* Sales/Menu Category Share Progress Bars */}
-            <div className="glass-panel" style={{ padding: "30px", textAlign: "left" }}>
-              <h3 style={{ marginBottom: "20px", fontFamily: "var(--display)" }}>Menu Distribution by Category</h3>
+            <div className="royal-panel" style={{ padding: "30px", textAlign: "left" }}>
+              <h3 className="royal-title" style={{ fontSize: "1.25rem", marginBottom: "20px" }}>Menu Distribution</h3>
               <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
                 {Object.entries(categoryCounts).map(([cat, count]) => {
                   const percentage = totalMenuItemsCount > 0 ? (count / totalMenuItemsCount) * 100 : 0;
@@ -591,8 +677,8 @@ export default function AdminDashboard({ loggedInUser }) {
                         <strong>{cat}</strong>
                         <span>{count} item(s) ({percentage.toFixed(0)}%)</span>
                       </div>
-                      <div style={{ background: "var(--bg-secondary)", height: "8px", borderRadius: "4px", overflow: "hidden" }}>
-                        <div style={{ background: "var(--accent)", width: `${percentage}%`, height: "100%", borderRadius: "4px" }}></div>
+                      <div style={{ background: "rgba(255,255,255,0.05)", height: "8px", borderRadius: "0px", overflow: "hidden" }}>
+                        <div style={{ background: "var(--accent)", width: `${percentage}%`, height: "100%" }}></div>
                       </div>
                     </div>
                   );
@@ -601,16 +687,16 @@ export default function AdminDashboard({ loggedInUser }) {
             </div>
 
             {/* Most Ordered Dishes Panel */}
-            <div className="glass-panel" style={{ padding: "30px", textAlign: "left" }}>
-              <h3 style={{ marginBottom: "15px", fontFamily: "var(--display)", color: "var(--accent)" }}>🔥 Top 5 Best Selling Dishes</h3>
+            <div className="royal-panel" style={{ padding: "30px", textAlign: "left" }}>
+              <h3 className="royal-title" style={{ fontSize: "1.25rem", marginBottom: "15px" }}>🔥 Top 5 Best Sellers</h3>
               {topDishes.length === 0 ? (
-                <div style={{ padding: "40px 0", color: "var(--text-muted)", fontSize: "0.95rem", textAlign: "center" }}>
+                <div style={{ padding: "40px 0", color: "var(--text-muted)", fontSize: "0.95rem", textAlign: "center", fontStyle: "italic" }}>
                   📊 No dishes ordered yet. Analytics will populate once customers place table orders.
                 </div>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                   {topDishes.map((item, idx) => (
-                    <div key={idx} className="flex-between" style={{ padding: "10px 14px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid var(--border-glass)", borderRadius: "8px" }}>
+                    <div key={idx} className="flex-between" style={{ padding: "10px 14px", background: "rgba(205, 162, 80, 0.03)", border: "1px solid rgba(205, 162, 80, 0.15)", borderRadius: "0px" }}>
                       <div>
                         <span style={{ fontSize: "1.1rem", marginRight: "8px" }}>{idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : "✨"}</span>
                         <strong style={{ color: "#ffffff" }}>{item.name}</strong>
@@ -629,41 +715,41 @@ export default function AdminDashboard({ loggedInUser }) {
       {activeTab === "menu" && (
         <div className="split-layout animate-fade">
           {/* Left Side: Digital Menu & Inventory listing table */}
-          <div className="glass-panel" style={{ padding: "24px", textAlign: "left" }}>
-            <h2 style={{ fontFamily: "var(--display)", fontSize: "1.3rem", marginBottom: "16px" }}>Digital Menu & Inventory</h2>
+          <div className="royal-panel" style={{ padding: "24px", textAlign: "left" }}>
+            <h2 className="royal-title" style={{ fontSize: "1.25rem", marginBottom: "16px" }}>Digital Menu & Inventory</h2>
             
             <div style={{ overflowX: "auto", maxHeight: "600px" }}>
-              <table style={{ width: "100%", fontSize: "0.9rem", borderCollapse: "collapse" }}>
+              <table className="royal-table">
                 <thead>
-                  <tr style={{ borderBottom: "1px solid var(--border-glass)" }}>
-                    <th style={{ padding: "10px 8px" }}>Dish</th>
-                    <th style={{ padding: "10px 8px" }}>Price</th>
-                    <th style={{ padding: "10px 8px" }}>Stock Level</th>
-                    <th style={{ padding: "10px 8px", textAlign: "center" }}>Actions</th>
+                  <tr>
+                    <th>Dish</th>
+                    <th>Price</th>
+                    <th>Stock Level</th>
+                    <th style={{ textAlign: "center" }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {menuItems.map(item => (
-                    <tr key={item.itemId} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.05)" }}>
-                      <td style={{ padding: "12px 8px" }}>
+                    <tr key={item.itemId}>
+                      <td>
                         <strong style={{ color: "white" }}>{item.itemName}</strong>
                         <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{item.category}</div>
                       </td>
-                      <td style={{ padding: "12px 8px", color: "var(--accent)" }}>₹{item.price.toFixed(2)}</td>
-                      <td style={{ padding: "12px 8px" }}>
+                      <td style={{ color: "var(--accent)" }}>₹{item.price.toFixed(2)}</td>
+                      <td>
                         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                           <button 
                             type="button"
                             onClick={() => handleDownstock(item)} 
-                            className="btn btn-glass" 
-                            style={{ width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, minWidth: "auto", borderRadius: "4px" }}
+                            className="royal-btn-outline" 
+                            style={{ width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, minWidth: "auto" }}
                             disabled={item.availableQuantity <= 0}
                           >
                             -
                           </button>
                           <span style={{ 
                             color: item.availableQuantity <= 5 ? "var(--danger)" : 
-                                   item.availableQuantity <= 15 ? "var(--warning)" : "var(--success)",
+                                     item.availableQuantity <= 15 ? "var(--warning)" : "var(--success)",
                             fontWeight: "700",
                             minWidth: "20px",
                             textAlign: "center"
@@ -673,28 +759,28 @@ export default function AdminDashboard({ loggedInUser }) {
                           <button 
                             type="button"
                             onClick={() => handleUpstock(item)} 
-                            className="btn btn-glass" 
-                            style={{ width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, minWidth: "auto", borderRadius: "4px" }}
+                            className="royal-btn-outline" 
+                            style={{ width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, minWidth: "auto" }}
                           >
                             +
                           </button>
                         </div>
                       </td>
-                      <td style={{ padding: "12px 8px", textAlign: "center" }}>
+                      <td>
                         <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
                           <button 
                             type="button"
                             onClick={() => startEditing(item)} 
-                            className="btn btn-glass"
-                            style={{ padding: "6px 10px", fontSize: "0.75rem" }}
+                            className="royal-btn"
+                            style={{ padding: "6px 12px !important", fontSize: "0.75rem" }}
                           >
                             Edit
                           </button>
                           <button 
                             type="button"
                             onClick={() => handleDeleteMenuItem(item.itemId)} 
-                            className="btn btn-danger" 
-                            style={{ padding: "6px 10px", fontSize: "0.75rem" }}
+                            className="royal-btn-outline" 
+                            style={{ padding: "6px 12px !important", fontSize: "0.75rem", borderColor: "rgba(239, 68, 68, 0.4)", color: "#f87171" }}
                           >
                             Delete
                           </button>
@@ -708,15 +794,15 @@ export default function AdminDashboard({ loggedInUser }) {
           </div>
 
           {/* Right Side: Form (Edit if selected, otherwise Add) */}
-          <div className="glass-panel" style={{ padding: "24px", textAlign: "left", height: "fit-content" }}>
+          <div className="royal-panel" style={{ padding: "24px", textAlign: "left", height: "fit-content" }}>
             {editingItem ? (
               <div>
-                <div className="flex-between" style={{ borderBottom: "1px solid var(--border-glass)", paddingBottom: "14px", marginBottom: "20px" }}>
+                <div className="flex-between" style={{ borderBottom: "1px solid rgba(205, 162, 80, 0.2)", paddingBottom: "14px", marginBottom: "20px" }}>
                   <div>
-                    <h2 style={{ fontFamily: "var(--display)", fontSize: "1.3rem" }}>Edit Menu Item</h2>
+                    <h2 className="royal-title" style={{ fontSize: "1.25rem" }}>Edit Menu Item</h2>
                     <span style={{ fontSize: "0.9rem", color: "var(--text-secondary)" }}>ID: <strong style={{ color: "white" }}>{editingItem.itemId}</strong></span>
                   </div>
-                  <button type="button" onClick={() => setEditingItem(null)} className="btn btn-secondary" style={{ padding: "6px 12px", fontSize: "0.85rem" }}>
+                  <button type="button" onClick={() => setEditingItem(null)} className="royal-btn-outline" style={{ padding: "6px 12px", fontSize: "0.85rem" }}>
                     Cancel
                   </button>
                 </div>
@@ -729,7 +815,7 @@ export default function AdminDashboard({ loggedInUser }) {
                       value={editName} 
                       onChange={e => setEditName(e.target.value)} 
                       required 
-                      style={{ width: "100%" }}
+                      style={{ width: "100%", border: "1px solid rgba(205, 162, 80, 0.2)", background: "rgba(0,0,0,0.2)", color: "white" }}
                     />
                   </div>
 
@@ -741,7 +827,7 @@ export default function AdminDashboard({ loggedInUser }) {
                         value={editCategory} 
                         onChange={e => setEditCategory(e.target.value)} 
                         required 
-                        style={{ width: "100%" }}
+                        style={{ width: "100%", border: "1px solid rgba(205, 162, 80, 0.2)", background: "rgba(0,0,0,0.2)", color: "white" }}
                       />
                     </div>
                     <div className="form-group">
@@ -752,7 +838,7 @@ export default function AdminDashboard({ loggedInUser }) {
                         value={editPrice} 
                         onChange={e => setEditPrice(e.target.value)} 
                         required 
-                        style={{ width: "100%" }}
+                        style={{ width: "100%", border: "1px solid rgba(205, 162, 80, 0.2)", background: "rgba(0,0,0,0.2)", color: "white" }}
                       />
                     </div>
                   </div>
@@ -763,10 +849,10 @@ export default function AdminDashboard({ loggedInUser }) {
                       <button 
                         type="button" 
                         onClick={() => setEditQuantity(q => Math.max(0, Number(q) - 1))} 
-                        className="btn btn-secondary" 
+                        className="royal-btn-outline" 
                         style={{ padding: "8px 16px", fontSize: "1rem" }}
                       >
-                        - Downstock
+                        - Down
                       </button>
                       <input 
                         type="number" 
@@ -774,15 +860,15 @@ export default function AdminDashboard({ loggedInUser }) {
                         value={editQuantity} 
                         onChange={e => setEditQuantity(e.target.value)} 
                         required 
-                        style={{ width: "80px", textAlign: "center", margin: 0 }}
+                        style={{ width: "80px", textAlign: "center", margin: 0, border: "1px solid rgba(205, 162, 80, 0.2)", background: "rgba(0,0,0,0.2)", color: "white" }}
                       />
                       <button 
                         type="button" 
                         onClick={() => setEditQuantity(q => Number(q) + 1)} 
-                        className="btn btn-primary" 
+                        className="royal-btn" 
                         style={{ padding: "8px 16px", fontSize: "1rem" }}
                       >
-                        + Upstock
+                        + Up
                       </button>
                     </div>
                   </div>
@@ -793,13 +879,13 @@ export default function AdminDashboard({ loggedInUser }) {
                       value={editDescription} 
                       onChange={e => setEditDescription(e.target.value)} 
                       rows="3" 
-                      style={{ width: "100%", padding: "10px", background: "rgba(0,0,0,0.2)", border: "1px solid var(--border-glass)", borderRadius: "8px", color: "white", fontFamily: "inherit" }}
+                      style={{ width: "100%", padding: "10px", background: "rgba(0,0,0,0.2)", border: "1px solid rgba(205, 162, 80, 0.2)", color: "white", fontFamily: "inherit" }}
                     />
                   </div>
 
                   <button 
                     type="submit" 
-                    className="btn btn-primary" 
+                    className="royal-btn" 
                     style={{ width: "100%", padding: "12px", marginTop: "10px" }}
                   >
                     💾 Save Changes
@@ -808,23 +894,24 @@ export default function AdminDashboard({ loggedInUser }) {
               </div>
             ) : (
               <div>
-                <h2 style={{ fontFamily: "var(--display)", fontSize: "1.3rem", marginBottom: "20px" }}>Add New Dish</h2>
+                <h2 className="royal-title" style={{ fontSize: "1.25rem", marginBottom: "20px" }}>Add New Dish</h2>
                 
                 <form onSubmit={handleAddMenuItem}>
                   <div className="form-group">
-                    <label>Dish Name *</label>
+                    <label style={{ color: "var(--text-secondary)", marginBottom: "6px", display: "block" }}>Dish Name *</label>
                     <input 
                       type="text" 
                       placeholder="e.g. Garlic Bread"
                       value={itemName} 
                       onChange={e => setItemName(e.target.value)} 
                       required
+                      style={{ width: "100%", border: "1px solid rgba(205, 162, 80, 0.2)", background: "rgba(0,0,0,0.2)", color: "white" }}
                     />
                   </div>
 
                   <div className="form-group">
-                    <label>Category *</label>
-                    <select value={category} onChange={e => setCategory(e.target.value)}>
+                    <label style={{ color: "var(--text-secondary)", marginBottom: "6px", display: "block" }}>Category *</label>
+                    <select value={category} onChange={e => setCategory(e.target.value)} style={{ width: "100%", padding: "10px", border: "1px solid rgba(205, 162, 80, 0.2)", background: "rgba(0,0,0,0.2)", color: "white" }}>
                       <option value="Starters">Starters</option>
                       <option value="Mains">Mains</option>
                       <option value="Desserts">Desserts</option>
@@ -833,18 +920,19 @@ export default function AdminDashboard({ loggedInUser }) {
                   </div>
 
                   <div className="form-group">
-                    <label>Description</label>
+                    <label style={{ color: "var(--text-secondary)", marginBottom: "6px", display: "block" }}>Description</label>
                     <textarea 
                       rows="3" 
                       placeholder="Describe ingredients, allergen warnings..."
                       value={description} 
                       onChange={e => setDescription(e.target.value)}
+                      style={{ width: "100%", padding: "10px", border: "1px solid rgba(205, 162, 80, 0.2)", background: "rgba(0,0,0,0.2)", color: "white", fontFamily: "inherit" }}
                     />
                   </div>
 
                   <div className="grid-2col-responsive" style={{ gap: "12px" }}>
                     <div className="form-group">
-                      <label>Price (₹) *</label>
+                      <label style={{ color: "var(--text-secondary)", marginBottom: "6px", display: "block" }}>Price (₹) *</label>
                       <input 
                         type="number" 
                         step="0.01" 
@@ -852,21 +940,23 @@ export default function AdminDashboard({ loggedInUser }) {
                         value={price} 
                         onChange={e => setPrice(e.target.value)} 
                         required
+                        style={{ width: "100%", border: "1px solid rgba(205, 162, 80, 0.2)", background: "rgba(0,0,0,0.2)", color: "white" }}
                       />
                     </div>
                     <div className="form-group">
-                      <label>Initial Stock *</label>
+                      <label style={{ color: "var(--text-secondary)", marginBottom: "6px", display: "block" }}>Initial Stock *</label>
                       <input 
                         type="number" 
                         placeholder="50"
                         value={availableQuantity} 
                         onChange={e => setAvailableQuantity(e.target.value)} 
                         required
+                        style={{ width: "100%", border: "1px solid rgba(205, 162, 80, 0.2)", background: "rgba(0,0,0,0.2)", color: "white" }}
                       />
                     </div>
                   </div>
 
-                  <button type="submit" className="btn btn-primary" style={{ width: "100%", padding: "12px", marginTop: "10px" }}>
+                  <button type="submit" className="royal-btn" style={{ width: "100%", padding: "12px", marginTop: "10px" }}>
                     ➕ Create Menu Item
                   </button>
                 </form>
@@ -880,8 +970,8 @@ export default function AdminDashboard({ loggedInUser }) {
       {activeTab === "cashier" && (
         <div className="split-layout animate-fade">
           {/* Left Side: Search & Results */}
-          <div className="glass-panel" style={{ padding: "24px", textAlign: "left" }}>
-            <h2 style={{ fontFamily: "var(--display)", fontSize: "1.4rem", marginBottom: "16px" }}>🛎️ Cash Counter Queue</h2>
+          <div className="royal-panel" style={{ padding: "24px", textAlign: "left" }}>
+            <h2 className="royal-title" style={{ fontSize: "1.25rem", marginBottom: "16px" }}>🛎️ Cash Counter Queue</h2>
             
             {/* Search Input */}
             <div style={{ marginBottom: "20px" }}>
@@ -890,7 +980,7 @@ export default function AdminDashboard({ loggedInUser }) {
                 placeholder="🔎 Search customer name, order ID, or customer ID..."
                 value={cashierSearch}
                 onChange={e => setCashierSearch(e.target.value)}
-                style={{ width: "100%", padding: "12px 16px", borderRadius: "8px", border: "1px solid var(--border-glass)", background: "rgba(0,0,0,0.2)", color: "white" }}
+                style={{ width: "100%", padding: "12px 16px", border: "1px solid rgba(205, 162, 80, 0.2)", background: "rgba(0,0,0,0.2)", color: "white" }}
               />
             </div>
 
@@ -913,24 +1003,38 @@ export default function AdminDashboard({ loggedInUser }) {
                     return (
                       <div
                         key={c.customerId}
-                        className="glass-panel"
+                        className="royal-panel"
                         onClick={() => setCashierSelectedCustomerId(c.customerId)}
                         style={{
                           padding: "16px",
                           cursor: "pointer",
-                          background: isSelected ? "rgba(255, 255, 255, 0.05)" : "rgba(255, 255, 255, 0.01)",
-                          borderColor: isSelected ? "var(--accent)" : "var(--border-glass)",
+                          background: isSelected ? "rgba(205, 162, 80, 0.08)" : "rgba(205, 162, 80, 0.02)",
+                          borderColor: isSelected ? "var(--accent)" : "rgba(205, 162, 80, 0.15)",
                           transition: "all 0.2s ease"
                         }}
                       >
                         <div className="flex-between" style={{ marginBottom: "8px" }}>
                           <div>
-                            <strong style={{ color: "#ffffff", marginRight: "8px" }}>{c.customerName}</strong>
-                            <span className={`status-badge ${c.status.toLowerCase()}`}>
+                            <strong style={{ color: "#ffffff", marginRight: "8px" }}>{getCleanCustomerName(c.customerName)}</strong>
+                            <span 
+                              className="role-badge" 
+                              style={{ 
+                                fontSize: "0.65rem", 
+                                padding: "1px 6px",
+                                marginRight: "8px",
+                                background: getCustomerType(c.customerName) === "Walk-in" ? "rgba(168, 85, 247, 0.15)" : "rgba(16, 185, 129, 0.15)",
+                                color: getCustomerType(c.customerName) === "Walk-in" ? "#c084fc" : "#34d399",
+                                border: getCustomerType(c.customerName) === "Walk-in" ? "1px solid rgba(168, 85, 247, 0.3)" : "1px solid rgba(16, 185, 129, 0.3)",
+                                borderRadius: "4px"
+                              }}
+                            >
+                              {getCustomerType(c.customerName)}
+                            </span>
+                            <span className={`status-badge ${c.status.toLowerCase()}`} style={{ border: "1px solid rgba(205, 162, 80, 0.2)" }}>
                               {c.status}
                             </span>
                           </div>
-                          <span style={{ fontSize: "0.9rem", color: "var(--accent)", fontWeight: "700" }}>
+                          <span style={{ fontSize: "0.95rem", color: "var(--accent)", fontWeight: "700" }}>
                             ₹{c.totalAmount.toFixed(2)}
                           </span>
                         </div>
@@ -944,7 +1048,7 @@ export default function AdminDashboard({ loggedInUser }) {
                     );
                   })}
                 {getUnpaidCustomers().length === 0 && (
-                  <div style={{ textAlign: "center", padding: "40px 0", color: "var(--text-muted)" }}>
+                  <div style={{ textAlign: "center", padding: "40px 0", color: "var(--text-muted)", fontStyle: "italic" }}>
                     📭 No active bills to settle.
                   </div>
                 )}
@@ -953,14 +1057,14 @@ export default function AdminDashboard({ loggedInUser }) {
           </div>
 
           {/* Right Side: Order details & settlement options */}
-          <div className="glass-panel" style={{ padding: "24px", textAlign: "left" }}>
+          <div className="royal-panel" style={{ padding: "24px", textAlign: "left" }}>
             {(() => {
               const selectedCustomer = getUnpaidCustomers().find(c => c.customerId === cashierSelectedCustomerId);
               if (!selectedCustomer) {
                 return (
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", minHeight: "350px", color: "var(--text-muted)" }}>
                     <div style={{ fontSize: "3rem", marginBottom: "15px" }}>🛎️</div>
-                    <p>Search and select an active customer from the queue to verify details and process payment.</p>
+                    <p style={{ fontFamily: "var(--serif)", fontStyle: "italic" }}>Search and select an active customer from the queue to verify details and process payment.</p>
                   </div>
                 );
               }
@@ -998,20 +1102,33 @@ export default function AdminDashboard({ loggedInUser }) {
 
               return (
                 <div>
-                  <div style={{ borderBottom: "1px solid var(--border-glass)", paddingBottom: "14px", marginBottom: "20px" }}>
-                    <h2 style={{ fontFamily: "var(--display)", fontSize: "1.4rem", margin: 0 }}>Bill Settle & Details</h2>
+                  <div style={{ borderBottom: "1px solid rgba(205, 162, 80, 0.2)", paddingBottom: "14px", marginBottom: "20px" }}>
+                    <h2 className="royal-title" style={{ fontSize: "1.25rem", margin: 0 }}>Bill Settle & Details</h2>
                     <span style={{ fontSize: "0.9rem", color: "var(--text-secondary)" }}>Verify Walk-in/Table guest using Customer ID</span>
                   </div>
 
                   {/* Guest Profile Card */}
                   <div className="grid-2col-responsive" style={{ gap: "16px", marginBottom: "20px" }}>
-                    <div style={{ background: "rgba(255, 255, 255, 0.02)", padding: "12px", borderRadius: "8px", border: "1px solid var(--border-glass)" }}>
+                    <div style={{ background: "rgba(205, 162, 80, 0.02)", padding: "12px", border: "1px solid rgba(205, 162, 80, 0.15)" }}>
                       <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>Guest Name</span>
-                      <div style={{ fontWeight: "600", color: "#ffffff", marginTop: "4px" }}>
-                        {selectedCustomer.customerName}
+                      <div style={{ fontWeight: "600", color: "#ffffff", marginTop: "4px", display: "flex", gap: "8px", alignItems: "center" }}>
+                        {getCleanCustomerName(selectedCustomer.customerName)}
+                        <span 
+                          className="role-badge" 
+                          style={{ 
+                            fontSize: "0.65rem", 
+                            padding: "1px 6px",
+                            background: getCustomerType(selectedCustomer.customerName) === "Walk-in" ? "rgba(168, 85, 247, 0.15)" : "rgba(16, 185, 129, 0.15)",
+                            color: getCustomerType(selectedCustomer.customerName) === "Walk-in" ? "#c084fc" : "#34d399",
+                            border: getCustomerType(selectedCustomer.customerName) === "Walk-in" ? "1px solid rgba(168, 85, 247, 0.3)" : "1px solid rgba(16, 185, 129, 0.3)",
+                            borderRadius: "4px"
+                          }}
+                        >
+                          {getCustomerType(selectedCustomer.customerName)}
+                        </span>
                       </div>
                     </div>
-                    <div style={{ background: "rgba(255, 255, 255, 0.02)", padding: "12px", borderRadius: "8px", border: "1px solid var(--border-glass)" }}>
+                    <div style={{ background: "rgba(205, 162, 80, 0.02)", padding: "12px", border: "1px solid rgba(205, 162, 80, 0.15)" }}>
                       <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>Customer ID (Cross-check)</span>
                       <div style={{ fontWeight: "500", color: "var(--accent)", fontSize: "0.85rem", marginTop: "4px", overflowWrap: "anywhere" }}>
                         {selectedCustomer.customerId}
@@ -1020,8 +1137,8 @@ export default function AdminDashboard({ loggedInUser }) {
                   </div>
 
                   {/* Itemized Order list */}
-                  <h3 style={{ fontSize: "1.1rem", marginBottom: "10px", fontFamily: "var(--display)" }}>Aggregated Ordered Items</h3>
-                  <div style={{ background: "rgba(0, 0, 0, 0.2)", borderRadius: "8px", padding: "10px 16px", marginBottom: "24px", maxHeight: "200px", overflowY: "auto" }}>
+                  <h3 className="royal-subtitle" style={{ fontSize: "1.15rem", marginBottom: "10px", fontStyle: "normal" }}>Aggregated Ordered Items</h3>
+                  <div style={{ background: "rgba(0, 0, 0, 0.2)", border: "1px solid rgba(205, 162, 80, 0.12)", padding: "10px 16px", marginBottom: "24px", maxHeight: "200px", overflowY: "auto" }}>
                     {combinedItems.length > 0 ? (
                       combinedItems.map((item, idx) => (
                         <div key={idx} className="flex-between" style={{ padding: "8px 0", borderBottom: idx < combinedItems.length - 1 ? "1px solid rgba(255, 255, 255, 0.05)" : "none" }}>
@@ -1040,38 +1157,41 @@ export default function AdminDashboard({ loggedInUser }) {
                   </div>
 
                   {/* Financial Summary */}
-                  <div style={{ borderTop: "1px solid var(--border-glass)", paddingTop: "14px", marginBottom: "24px", fontSize: "0.95rem" }}>
+                  <div style={{ borderTop: "1px solid rgba(205, 162, 80, 0.2)", paddingTop: "14px", marginBottom: "24px", fontSize: "0.95rem" }}>
                     <div className="flex-between" style={{ marginBottom: "6px" }}>
                       <span>Subtotal:</span>
                       <span>₹{selectedCustomer.subtotal?.toFixed(2)}</span>
                     </div>
-                    <div className="flex-between" style={{ marginBottom: "6px" }}>
+                    <div className="flex-between" style={{ color: "var(--text-muted)", marginBottom: "6px" }}>
                       <span>GST (18%):</span>
                       <span>₹{selectedCustomer.gst?.toFixed(2)}</span>
                     </div>
-                    <div className="flex-between" style={{ fontSize: "1.2rem", fontWeight: "700", borderTop: "1px dotted var(--border-glass)", paddingTop: "10px", marginTop: "4px" }}>
+                    
+                    <div className="royal-divider-gold"><span>♦</span></div>
+                    
+                    <div className="flex-between" style={{ fontSize: "1.2rem", fontWeight: "700", paddingTop: "4px", marginTop: "4px" }}>
                       <span style={{ color: "#ffffff" }}>Grand Total:</span>
                       <span style={{ color: "var(--accent)" }}>₹{selectedCustomer.totalAmount?.toFixed(2)}</span>
                     </div>
                   </div>
 
                   {/* Settle Action Buttons */}
-                  <div style={{ background: "rgba(223, 183, 67, 0.05)", border: "1px solid rgba(223, 183, 67, 0.2)", padding: "20px", borderRadius: "12px" }}>
-                    <h4 style={{ color: "white", marginTop: 0, marginBottom: "12px", textAlign: "center", fontSize: "0.95rem" }}>💳 Settle Combined Bill</h4>
+                  <div className="royal-panel" style={{ background: "rgba(205, 162, 80, 0.05)", border: "1px solid rgba(205, 162, 80, 0.2)", padding: "20px" }}>
+                    <h4 className="royal-subtitle" style={{ color: "white", marginTop: 0, marginBottom: "12px", textAlign: "center", fontSize: "0.95rem", fontStyle: "normal" }}>⚜️ Settle Combined Bill</h4>
                     <div style={{ display: "flex", gap: "12px" }}>
                       <button 
                         type="button"
                         onClick={() => handleCashierSettleCustomer(selectedCustomer, "Paid")} 
-                        className="btn btn-primary" 
-                        style={{ flex: 1, background: "var(--success)", color: "#011220", fontWeight: "700" }}
+                        className="royal-btn" 
+                        style={{ flex: 1, background: "var(--success) !important", border: "1px solid var(--success)", color: "#011220 !important" }}
                       >
                         💵 Cash Paid
                       </button>
                       <button 
                         type="button"
                         onClick={() => handleOpenPayModal(selectedCustomer)} 
-                        className="btn btn-primary" 
-                        style={{ flex: 1, background: "var(--accent)", color: "#011220", fontWeight: "700" }}
+                        className="royal-btn-outline" 
+                        style={{ flex: 1 }}
                       >
                         📱 QR Code Settle
                       </button>
@@ -1088,55 +1208,58 @@ export default function AdminDashboard({ loggedInUser }) {
       {activeTab === "users" && (
         <div className="split-layout animate-fade">
           {/* Add User form */}
-          <div className="glass-panel" style={{ padding: "24px", textAlign: "left", height: "fit-content" }}>
-            <h2 style={{ fontFamily: "var(--display)", fontSize: "1.3rem", marginBottom: "20px" }}>
+          <div className="royal-panel" style={{ padding: "24px", textAlign: "left", height: "fit-content" }}>
+            <h2 className="royal-title" style={{ fontSize: "1.25rem", marginBottom: "20px" }}>
               {editingUser ? "Edit Account" : "Register Employee"}
             </h2>
             
             <form onSubmit={handleAddUser}>
               <div className="form-group">
-                <label>Employee Full Name *</label>
+                <label style={{ color: "var(--text-secondary)", marginBottom: "6px", display: "block" }}>Employee Full Name *</label>
                 <input 
                   type="text" 
                   placeholder="e.g. Waiter Jack"
                   value={userFullName} 
                   onChange={e => setUserFullName(e.target.value)} 
                   required
+                  style={{ width: "100%", border: "1px solid rgba(205, 162, 80, 0.2)", background: "rgba(0,0,0,0.2)", color: "white" }}
                 />
               </div>
 
               <div className="form-group">
-                <label>Username *</label>
+                <label style={{ color: "var(--text-secondary)", marginBottom: "6px", display: "block" }}>Username *</label>
                 <input 
                   type="text" 
                   placeholder="e.g. jack_waiter"
                   value={userUsername} 
                   onChange={e => setUserUsername(e.target.value)} 
                   required
+                  style={{ width: "100%", border: "1px solid rgba(205, 162, 80, 0.2)", background: "rgba(0,0,0,0.2)", color: "white" }}
                 />
               </div>
 
               <div className="form-group">
-                <label>Password *</label>
+                <label style={{ color: "var(--text-secondary)", marginBottom: "6px", display: "block" }}>Password *</label>
                 <input 
                   type="password" 
                   placeholder="••••••••"
                   value={userPassword} 
                   onChange={e => setUserPassword(e.target.value)} 
                   required
+                  style={{ width: "100%", border: "1px solid rgba(205, 162, 80, 0.2)", background: "rgba(0,0,0,0.2)", color: "white" }}
                 />
               </div>
 
               <div className="form-group">
-                <label>Role Privilege *</label>
-                <select value={userRole} onChange={e => setUserRole(e.target.value)}>
+                <label style={{ color: "var(--text-secondary)", marginBottom: "6px", display: "block" }}>Role Privilege *</label>
+                <select value={userRole} onChange={e => setUserRole(e.target.value)} style={{ width: "100%", padding: "10px", border: "1px solid rgba(205, 162, 80, 0.2)", background: "rgba(0,0,0,0.2)", color: "white" }}>
                   <option value="STAFF">STAFF (Waiters / Chefs)</option>
                   <option value="ADMIN">ADMIN (Managers)</option>
                 </select>
               </div>
 
               <div style={{ display: "flex", gap: "10px" }}>
-                <button type="submit" className="btn btn-primary" style={{ flexGrow: 1, padding: "12px" }}>
+                <button type="submit" className="royal-btn" style={{ flexGrow: 1, padding: "12px" }}>
                   {editingUser ? "Save Updates" : "➕ Create Account"}
                 </button>
                 {editingUser && (
@@ -1149,7 +1272,7 @@ export default function AdminDashboard({ loggedInUser }) {
                       setUserPassword("");
                       setUserRole("STAFF");
                     }}
-                    className="btn btn-secondary"
+                    className="royal-btn-outline"
                     style={{ padding: "12px" }}
                   >
                     Cancel
@@ -1160,11 +1283,11 @@ export default function AdminDashboard({ loggedInUser }) {
           </div>
 
           {/* User Directory listing table */}
-          <div className="glass-panel" style={{ padding: "24px", textAlign: "left" }}>
-            <h2 style={{ fontFamily: "var(--display)", fontSize: "1.3rem", marginBottom: "16px" }}>Staff List Directory</h2>
+          <div className="royal-panel" style={{ padding: "24px", textAlign: "left" }}>
+            <h2 className="royal-title" style={{ fontSize: "1.25rem", marginBottom: "16px" }}>Staff List Directory</h2>
             
             <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", fontSize: "0.9rem" }}>
+              <table className="royal-table">
                 <thead>
                   <tr>
                     <th>User ID</th>
@@ -1181,7 +1304,7 @@ export default function AdminDashboard({ loggedInUser }) {
                       <td><strong style={{ color: "white" }}>{user.fullName}</strong></td>
                       <td>{user.username}</td>
                       <td>
-                        <span className={`role-badge ${user.role.toLowerCase()}`}>
+                        <span className={`role-badge ${user.role.toLowerCase()}`} style={{ border: "1px solid rgba(205,162,80,0.2)" }}>
                           {user.role}
                         </span>
                       </td>
@@ -1189,15 +1312,15 @@ export default function AdminDashboard({ loggedInUser }) {
                         <div style={{ display: "flex", gap: "6px" }}>
                           <button 
                             onClick={() => handleStartEditUser(user)}
-                            className="btn btn-glass"
-                            style={{ padding: "4px 8px", fontSize: "0.75rem" }}
+                            className="royal-btn"
+                            style={{ padding: "4px 8px !important", fontSize: "0.75rem" }}
                           >
                             Edit
                           </button>
                           <button 
                             onClick={() => handleDeleteUser(user.userId)}
-                            className="btn btn-danger"
-                            style={{ padding: "4px 8px", fontSize: "0.75rem", background: "none", border: "1px solid var(--danger-border)", color: "var(--danger)" }}
+                            className="royal-btn-outline"
+                            style={{ padding: "4px 8px !important", fontSize: "0.75rem", borderColor: "rgba(239, 68, 68, 0.4)", color: "#f87171" }}
                             disabled={user.username === loggedInUser?.username} // Cannot delete oneself
                           >
                             Delete
@@ -1212,6 +1335,8 @@ export default function AdminDashboard({ loggedInUser }) {
           </div>
         </div>
       )}
+        </div>
+      </div>
 
       {/* Walk-in Customer Online Payment Modal */}
       {showPayModal && payCustomer && (
@@ -1228,18 +1353,17 @@ export default function AdminDashboard({ loggedInUser }) {
           zIndex: 2000,
           padding: "20px"
         }}>
-          <div className="glass-panel animate-fade" style={{
+          <div className="royal-panel animate-fade" style={{
             maxWidth: "450px",
             width: "100%",
             padding: "30px",
             textAlign: "center",
             border: "1px solid var(--accent)",
-            background: "linear-gradient(135deg, #0a192f 0%, #020d17 100%)",
-            borderRadius: "16px",
-            boxShadow: "0 20px 40px rgba(0, 0, 0, 0.5)"
+            background: "linear-gradient(135deg, #021222 0%, #032037 100%)",
+            boxShadow: "0 20px 40px rgba(0, 0, 0, 0.6)"
           }}>
-            <h2 style={{ fontFamily: "var(--display)", color: "var(--accent)", marginBottom: "10px" }}>Dine & Desk</h2>
-            <h3 style={{ color: "white", marginBottom: "20px", fontSize: "1.2rem" }}>Scan to Pay Online</h3>
+            <h2 className="royal-title" style={{ color: "var(--accent)", marginBottom: "10px", fontSize: "1.5rem" }}>Taste Royale</h2>
+            <h3 className="royal-subtitle" style={{ color: "white", marginBottom: "20px", fontSize: "1.1rem", fontStyle: "italic" }}>Scan to Pay Online</h3>
             
             <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", marginBottom: "15px" }}>
               Customer: <strong style={{ color: "white" }}>{payCustomer.customerName}</strong>
@@ -1249,10 +1373,10 @@ export default function AdminDashboard({ loggedInUser }) {
             <div style={{
               background: "white",
               padding: "16px",
-              borderRadius: "12px",
               display: "inline-block",
               marginBottom: "20px",
-              boxShadow: "0 8px 16px rgba(0,0,0,0.15)"
+              boxShadow: "0 8px 16px rgba(0,0,0,0.2)",
+              border: "1px solid var(--accent)"
             }}>
               <img 
                 src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&color=030d17&data=${encodeURIComponent(`upi://pay?pa=dinedesk@upi&pn=Dine%20And%20Desk&am=${payCustomer.totalAmount.toFixed(2)}&cu=INR&tn=Bill%20Session%20${payCustomer.customerId.substring(0, 8)}`)}`} 
@@ -1263,9 +1387,8 @@ export default function AdminDashboard({ loggedInUser }) {
 
             {/* Bill Summary inside Modal */}
             <div style={{
-              background: "rgba(255, 255, 255, 0.02)",
-              border: "1px solid var(--border-glass)",
-              borderRadius: "8px",
+              background: "rgba(205, 162, 80, 0.02)",
+              border: "1px solid rgba(205, 162, 80, 0.15)",
               padding: "12px 16px",
               marginBottom: "24px",
               textAlign: "left",
@@ -1279,17 +1402,20 @@ export default function AdminDashboard({ loggedInUser }) {
                 <span>GST (18%):</span>
                 <span>₹{payCustomer.gst?.toFixed(2)}</span>
               </div>
-              <div className="flex-between" style={{ fontSize: "1.1rem", fontWeight: "700", borderTop: "1px dotted var(--border-glass)", paddingTop: "8px", marginTop: "4px" }}>
+              
+              <div className="royal-divider-gold"><span>♦</span></div>
+              
+              <div className="flex-between" style={{ fontSize: "1.1rem", fontWeight: "700", paddingTop: "4px" }}>
                 <span style={{ color: "white" }}>Total Amount:</span>
                 <span style={{ color: "var(--accent)" }}>₹{payCustomer.totalAmount?.toFixed(2)}</span>
               </div>
             </div>
 
             <div style={{ display: "flex", gap: "12px" }}>
-              <button type="button" onClick={handleClosePayModal} className="btn btn-secondary" style={{ flex: 1, padding: "12px" }}>
+              <button type="button" onClick={handleClosePayModal} className="royal-btn-outline" style={{ flex: 1, padding: "12px" }}>
                 Cancel
               </button>
-              <button type="button" onClick={handleSimulateOnlinePay} className="btn btn-primary" style={{ flex: 2, padding: "12px" }}>
+              <button type="button" onClick={handleSimulateOnlinePay} className="royal-btn" style={{ flex: 2, padding: "12px" }}>
                 💳 Simulate Payment
               </button>
             </div>
